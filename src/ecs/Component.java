@@ -14,19 +14,24 @@ public class Component {
         indexTree = new IndexNode(3);
     }
 
-
-    public void addEntity(int entity, int index){
-        indexTree.addItem(entity, index);
+    /**
+     * Adds an entity and its respective component index to the index tree
+     *
+     * @param entityID entity integer ID reference Entity object
+     * @param index index of entity in the component
+     */
+    public void addEntity(int entityID, int index){
+        indexTree.addItem(entityID, index);
     }
 
-    public void addEntity(int entity){
-        indexTree.addItem(entity,0);
+    /**
+     * Removes an entity from the component's index tree
+     *
+     * @param entityID ID of entity to be removed
+     */
+    void removeEntity(int entityID) {
+        indexTree.removeItem(entityID);
     }
-
-    public void removeEntity(int entity) {
-        indexTree.removeItem(entity);
-    }
-
 
     public int getEntityIndex(int entity){
         return indexTree.getIndex(entity);

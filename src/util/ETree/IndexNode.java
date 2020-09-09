@@ -15,6 +15,13 @@ public class IndexNode extends ENode{
     private int[] leaf;
 
 
+    /**
+     * Initialize the IndexNode. If the order is:
+     *         1+ - create a branch node
+     *         0  - create a data node
+     *
+     * @param order level of the node
+     */
     public IndexNode(int order){
         this.order = (byte)order;
         if (order>0){
@@ -24,6 +31,13 @@ public class IndexNode extends ENode{
         }
     }
 
+    /**
+     * Add an integer value to the tree at index.
+     * Used to store the indices of entities' component data
+     *
+     * @param index index to add the value
+     * @param value data to be added to the tree
+     */
     public void addItem(int index, int value){
         index--;
         while (Math.pow(8,this.order+1) < index){
@@ -46,27 +60,12 @@ public class IndexNode extends ENode{
         tempNode.setBit(subIndex(index, 0),1);
         tempNode.setLeafData(subIndex(index,0), value);
     }
-    
-    /*
-    public void addItemAux(int index, int value){
-        if (order>1){
-            int currIndex = subIndex(index, order);
 
-            if (this.getBranch(currIndex)==null){
-                this.buildBranch(currIndex);
-                this.setBit((currIndex),1);
-            }
-
-            this.getBranch(currIndex).addItemAux(index, value);
-        }
-        else {
-            this.setBit(subIndex(index,1),1);
-            this.setLeafData(subIndex(item,1),subIndex(item,0),1);
-        }
-    }
-    
+    /**
+     * Remove data at a particular index
+     *
+     * @param index index of data to be removed
      */
-
     public void removeItem(int index){
         index--;
         IndexNode tempNode = this;
@@ -95,7 +94,6 @@ public class IndexNode extends ENode{
 
             tempNode = tempNode.getBranch(pathIndex);
         }
-        //System.out.println(index + " [getIndex] " + tempNode.getLeafData(subIndex(index,0)));
         return tempNode.getLeafData(subIndex(index, 0));
     }
 
@@ -152,6 +150,7 @@ public class IndexNode extends ENode{
         return count;
     }
 
+    //BROKEN
     void resizeTree(){
         if (order>1) {
             IndexNode tempNode = new IndexNode(this.order + 1);
@@ -160,7 +159,5 @@ public class IndexNode extends ENode{
             this.setOrder(tempNode.getOrder());
             this.setBranches(tempNode.getBranches());
         }
-
-        //System.out.println("IndexNode resized " + this.order);
     }
 }

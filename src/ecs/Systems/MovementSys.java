@@ -20,7 +20,7 @@ public class MovementSys extends System {
     public Class update(float dt, EntNode entityTree, BitMask componentMask, boolean entityChange) {
         java.lang.System.out.println("Updating MovementSys");
         Entity[] entities = getEntities(entityTree);
-        //java.lang.System.out.println("---MOVEMENTSYS - " + entities.length);
+
         int[] positionIndices = getComponentIndices(Position.class, entities, componentMask);
         int[] velocityIndices = getComponentIndices(Velocity.class, entities, componentMask);
 
@@ -30,7 +30,7 @@ public class MovementSys extends System {
         if (velocityIndices.length==0){
             return ControlSys.class;
         }
-        else {
+        else { //update positions of entities
             for (int index = 0; index < entities.length; index++) {
                 int positionIndex = positionIndices[index];
                 int velocityIndex = velocityIndices[index];

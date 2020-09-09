@@ -24,7 +24,7 @@ public class Collision extends Component {
     }
 
     public Collision addCollision(Entity collidedEntity){
-        System.out.println("Collision added: " + collidedEntity.getEntityId());
+        //System.out.println("Collision added: " + collidedEntity.getEntityId());
         super.setLastWriteIndex(this.collisions.add(collidedEntity));
         return this;
     }

@@ -3,8 +3,6 @@ package util.ETree;
 import ecs.Entity;
 import util.Container;
 
-import static java.lang.Integer.toBinaryString;
-
 public class EntNode extends ENode {
     //--------Node Data----------//
     //---(data in each node)-----//
@@ -20,6 +18,13 @@ public class EntNode extends ENode {
     private Container<Entity>[] leaf;
 
 
+    /**
+     * Initialize a new EntNode. If the order is:
+     *         1+ - create a branch node
+     *         0  - create a data node
+     *
+     * @param order the level of the node
+     */
     public EntNode(int order){
         this.order = (byte) order;
         if (order>0) {
@@ -52,10 +57,16 @@ public class EntNode extends ENode {
         this.changeItem(entity,false);
     }
 
+    /**
+     * Add or remove an entity, and indexes it by its components.
+     * Used to store all entities in the ECS
+     *
+     * @param entity entity to be added/removed
+     * @param add boolean determining addition or removal
+     */
     public void changeItem(Entity entity, boolean add){
         int componentIndex;
         int componentMask = entity.getComponents();
-        //System.out.println(toBinaryString(componentMask) + " entity mask");
         EntNode tempNode = this;
         for (int order = this.order; order > 0; order--){
             componentIndex = subIndex(componentMask,order);
@@ -67,33 +78,36 @@ public class EntNode extends ENode {
             
             tempNode = tempNode.getBranch(componentIndex);
         }
-        componentIndex = subIndex(componentMask,tempNode.getOrder());
-        //System.out.println("------------------------------" + toBinaryString(componentIndex));
+        componentIndex = subIndex(componentMask, tempNode.getOrder());
         if (add){
-            tempNode.addLeafItem(componentIndex,entity);
+            tempNode.addLeafItem(componentIndex, entity);
         } else {
             tempNode.removeLeafItem(componentIndex, entity);
         }
     }
 
+    /**
+     * Gets the entities from the tree matching the bitMask's components.
+     * Used to retrieve entities have particular components
+     *
+     * @param bitMask integer bitmask of components to filter
+     * @return Container of entities matching bitmask's components
+     */
     public Container<Entity> getEntities(int bitMask){
         int componentIndex = subIndex(bitMask,order);
         Container<Entity> container = new Container(Entity.class);
 
         for (int index = 0; index < 8; index++) {
             if (order>0){
-                //System.out.println(toBinaryString(componentIndex) + " " + toBinaryString(index) + " B " + order + " " + ((componentIndex&index)==componentIndex));
                 if ((componentIndex & index) == componentIndex && this.getBranch(index) != null) {
                     container.add(this.getBranch(index).getEntities(bitMask));
                 }
             } else {
-                //System.out.println(toBinaryString(componentIndex) + " " + toBinaryString(index) + " N " + order + " " + ((componentIndex&index)==componentIndex) + this.getLeafData(index).getSize());
                 if ((componentIndex&index)==componentIndex && this.getLeafData(index).getSize()!=0){
                     container.add(this.getLeafData(index));
                 }
             }
         }
-        //System.out.println("-----" + container.getSize());
         return container;
     }
 
@@ -119,7 +133,6 @@ public class EntNode extends ENode {
     }
 
     void addLeafItem(int leafIndex, Entity item){
-        //System.out.println("ENTITY ADDED " + item.getEntityId() + " " + leafIndex + " " + order);
         leaf[leafIndex].add(item);
     }
 

@@ -9,8 +9,11 @@ import util.ETree.CollisionNode;
 import util.ETree.EntNode;
 import util.Geometry;
 
+import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.geom.Rectangle2D;
+import java.io.File;
+import java.io.IOException;
 
 public class CollisionSys extends System {
     private Entity[] entities;
@@ -167,7 +170,7 @@ public class CollisionSys extends System {
                 //java.lang.System.out.println("Checking collision between " + entity.getEntityId() + " & " + otherEntity.getEntityId() + " | " + narrowPhase);
 
                 //Check if the entities are no-collided with each other
-                java.lang.System.out.println(narrowPhase + ":");
+                //java.lang.System.out.println(narrowPhase + ":");
                 if (narrowPhase && entitiesNoCollided(entity, otherEntity)){
                     noCollideOccurred = true;
                     continue;
@@ -204,41 +207,6 @@ public class CollisionSys extends System {
         } else {
             return new Container[0];
         }
-    }
-
-    private float[] checkWorldEdges(int index, float[] entityPos, float minX, float maxX, float minY, float maxY, int worldHeight, int worldWidth){
-        float[] indexVel;
-        float[] newPos = entityPos;
-
-        if (minY <= 0 || maxY >= worldHeight) {
-            indexVel = velocity.getVelocity(ballVelocityIndices[index]);
-            velocity.setVelocity(new float[]{indexVel[0], -indexVel[1]}, ballVelocityIndices[index]);
-            if (minY <= 0) {
-                newPos[1] = entityPos[1] - minY;
-                position.setYPos(entityPositionIndices[index], newPos[1]);
-            } else {
-                newPos[1] = entityPos[1] + (worldHeight - maxY);
-                position.setYPos(entityPositionIndices[index], newPos[1]);
-            }
-
-            //this.getECS().destroyEntity(entity);
-        } else {
-            if (minX <= 0 || maxX >= worldWidth) {
-                indexVel = velocity.getVelocity(ballVelocityIndices[index]);
-                velocity.setVelocity(new float[]{-indexVel[0], indexVel[1]}, ballVelocityIndices[index]);
-                if (minX <= 0) {
-                    newPos[0] = entityPos[0] - minX;
-                    position.setXPos(entityPositionIndices[index], newPos[0]);
-                } else {
-                    newPos[0] = entityPos[0] + (worldWidth - maxX);
-                    position.setXPos(entityPositionIndices[index], newPos[0]);
-                }
-
-                //this.getECS().destroyEntity(entity);
-            }
-        }
-
-        return newPos;
     }
 
     private boolean collisionOccurred(boolean narrowPhase, Entity e1, Entity e2, int e1Index){
@@ -368,46 +336,12 @@ public class CollisionSys extends System {
             if (e1.contains(components.getFromClasses(NoCollide.class)) && e2.contains(components.getFromClasses(NoCollide.class))) {
                 int e1NoCollide = noCollide.getNoCollide(noCollide.getEntityIndex(e1.getEntityId()));
                 int e2NoCollide = noCollide.getNoCollide(noCollide.getEntityIndex(e2.getEntityId()));
-                java.lang.System.out.println("NoCollide check [" + e1.getEntityId() + ", " + e2.getEntityId() + "]  " + e1NoCollide + " " + e2NoCollide);
+                //java.lang.System.out.println("NoCollide check [" + e1.getEntityId() + ", " + e2.getEntityId() + "]  " + e1NoCollide + " " + e2NoCollide);
                 if (e1NoCollide >= 0 && e2NoCollide >= 0)
                     return (e1NoCollide == e2NoCollide);
             }
         }
         return false;
-    }
-
-    private boolean linePoint(float x1, float y1, float x2, float y2, float projX, float projY, float length, float[] pos){
-        /*
-        float distance1 = Geometry.distanceFromPointToPoint(x1,y1,projX,projY);
-        float distance2 = Geometry.distanceFromPointToPoint(x2,y2,projX,projY);
-
-        float sum = distance1+distance2;
-        float error = (float) 0.1;
-        java.lang.System.out.println(sum + " -- " + length);
-
-        return sum < length + error && sum > length - error;
-
-         */
-
-        float error = (float) 0.05;
-        float xProjSum = Math.abs(x2-projX) + Math.abs(x1-projX);
-        float yProjSum = Math.abs(y2-projY) + Math.abs(y1-projY);
-        float xSum = Math.abs(x2-x1);
-        float ySum = Math.abs(y2-y1);
-
-        boolean withinXBounds = (xProjSum < xSum + error) && (xProjSum > xSum - error);
-        boolean withinYBounds = (yProjSum < ySum + error) && (yProjSum > ySum - error);
-
-        //java.lang.System.out.println(xSum+error + " -- " + xProjSum + " | " + ySum + " -- " + yProjSum + " | " + "(" + x1 + "," + y1 + ") (" + x2 + "," + y2 + "), ball: (" + pos[0] + "," + pos[1] + ")");
-        //java.lang.System.out.println(withinXBounds + " " + withinYBounds);
-        return (withinXBounds && withinYBounds);
-    }
-
-    private int getIndex(Entity[] arr, Entity entity) {
-        for (int i = 0; i < arr.length; i++)
-            if (arr[i] == entity)
-                return i;
-        return -1;
     }
 
     private void resolveCollisions(Entity entity, Entity otherEntity){
@@ -437,6 +371,7 @@ public class CollisionSys extends System {
         if (destroyBothEntities(e1Health, e2Health, healthDifference)){
             this.ecs.destroyEntity(e1);
             this.ecs.destroyEntity(e2);
+            playDeathSound();
             return;
         }
 
@@ -451,9 +386,11 @@ public class CollisionSys extends System {
             if (e1Healthier){
                 health.setHealth(health.getEntityIndex(e1.getEntityId()), healthDifference);
                 this.ecs.destroyEntity(e2);
+                playDeathSound();
             } else {
                 health.setHealth(health.getEntityIndex(e2.getEntityId()), healthDifference);
                 this.ecs.destroyEntity(e1);
+                playDeathSound();
             }
             return;
         }
@@ -463,20 +400,24 @@ public class CollisionSys extends System {
             ballSplit(e1, e2, healthDifference, 2);
             this.ecs.destroyEntity(e1);
             this.ecs.destroyEntity(e2);
+            playDeathSound();
         }
         else if (!e1Healthier && e1Moving) {
             ballSplit(e2, e1, healthDifference, 2);
             this.ecs.destroyEntity(e1);
             this.ecs.destroyEntity(e2);
+            playDeathSound();
         }
         else {
             if (e1Moving) {
                 health.setHealth(health.getEntityIndex(e1.getEntityId()), healthDifference);
                 this.ecs.destroyEntity(e2);
+                playDeathSound();
             }
             else if (e2Moving) {
                 health.setHealth(health.getEntityIndex(e2.getEntityId()), healthDifference);
                 this.ecs.destroyEntity(e1);
+                playDeathSound();
             }
         }
     }
@@ -533,7 +474,7 @@ public class CollisionSys extends System {
 
             // is this point actually on the line segment?
             // if so keep going, but if not, return false
-            boolean onSegment = linePoint(x1,y1,x2,y2, projectionX,projectionY,sideLength);
+            boolean onSegment = linePoint(x1,y1,x2,y2, projectionX,projectionY,sideLength, ballPos);
             if (onSegment){
                 distance = Geometry.distanceFromPointToPoint(projectionX, projectionY, ballPos[0], ballPos[1]);
                 if (distance < ballRadius) {
@@ -630,6 +571,72 @@ public class CollisionSys extends System {
         }
     }
 
+    private boolean linePoint(float x1, float y1, float x2, float y2, float projX, float projY, float length, float[] pos){
+        /*
+        float distance1 = Geometry.distanceFromPointToPoint(x1,y1,projX,projY);
+        float distance2 = Geometry.distanceFromPointToPoint(x2,y2,projX,projY);
+
+        float sum = distance1+distance2;
+        float error = (float) 0.1;
+        java.lang.System.out.println(sum + " -- " + length);
+
+        return sum < length + error && sum > length - error;
+
+         */
+
+        float error = (float) 0.05;
+        float xProjSum = Math.abs(x2-projX) + Math.abs(x1-projX);
+        float yProjSum = Math.abs(y2-projY) + Math.abs(y1-projY);
+        float xSum = Math.abs(x2-x1);
+        float ySum = Math.abs(y2-y1);
+
+        boolean withinXBounds = (xProjSum < xSum + error) && (xProjSum > xSum - error);
+        boolean withinYBounds = (yProjSum < ySum + error) && (yProjSum > ySum - error);
+
+        //java.lang.System.out.println(xSum+error + " -- " + xProjSum + " | " + ySum + " -- " + yProjSum + " | " + "(" + x1 + "," + y1 + ") (" + x2 + "," + y2 + "), ball: (" + pos[0] + "," + pos[1] + ")");
+        //java.lang.System.out.println(withinXBounds + " " + withinYBounds);
+        return (withinXBounds && withinYBounds);
+    }
+
+    private boolean destroyBothEntities(int e1Health, int e2Health, int healthDifference){
+        return ((healthDifference) / (float)(e1Health + e2Health)) < 0.05;
+    }
+
+    private float[] checkWorldEdges(int index, float[] entityPos, float minX, float maxX, float minY, float maxY, int worldHeight, int worldWidth){
+        float[] indexVel;
+        float[] newPos = entityPos;
+
+        if (minY <= 0 || maxY >= worldHeight) {
+            indexVel = velocity.getVelocity(ballVelocityIndices[index]);
+            velocity.setVelocity(new float[]{indexVel[0], -indexVel[1]}, ballVelocityIndices[index]);
+            if (minY <= 0) {
+                newPos[1] = entityPos[1] - minY;
+                position.setYPos(entityPositionIndices[index], newPos[1]);
+            } else {
+                newPos[1] = entityPos[1] + (worldHeight - maxY);
+                position.setYPos(entityPositionIndices[index], newPos[1]);
+            }
+
+            //this.getECS().destroyEntity(entity);
+        } else {
+            if (minX <= 0 || maxX >= worldWidth) {
+                indexVel = velocity.getVelocity(ballVelocityIndices[index]);
+                velocity.setVelocity(new float[]{-indexVel[0], indexVel[1]}, ballVelocityIndices[index]);
+                if (minX <= 0) {
+                    newPos[0] = entityPos[0] - minX;
+                    position.setXPos(entityPositionIndices[index], newPos[0]);
+                } else {
+                    newPos[0] = entityPos[0] + (worldWidth - maxX);
+                    position.setXPos(entityPositionIndices[index], newPos[0]);
+                }
+
+                //this.getECS().destroyEntity(entity);
+            }
+        }
+
+        return newPos;
+    }
+
     private float[] getVelocityComponents(Entity eSplit, Entity eReference, float[] splitPos, float[] referencePos){
         float[] splitVel;
         if (eSplit.contains(components.getFromClasses(Velocity.class))) {
@@ -658,33 +665,21 @@ public class CollisionSys extends System {
         return velComp;
     }
 
-    private boolean destroyBothEntities(int e1Health, int e2Health, int healthDifference){
-        return ((healthDifference) / (float)(e1Health + e2Health)) < 0.05;
+    private int getIndex(Entity[] arr, Entity entity) {
+        for (int i = 0; i < arr.length; i++)
+            if (arr[i] == entity)
+                return i;
+        return -1;
     }
 
-    private float[] circleHitEndPoint(float[] pos, int[] x, int[] y, int radius){
-        if (Geometry.distanceFromPointToPoint(pos[0],pos[1],x[0],y[0]) < radius){
-            return new float[]{x[0],y[0]};
+    private void playDeathSound(){
+        try {
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File("C:/Users/Sargy/IdeaProjects/PonjiECS/assets/pop2.wav").getCanonicalFile());
+            Clip clip = AudioSystem.getClip();
+            clip.open(audioInputStream);
+            clip.start();
+        } catch (IOException | UnsupportedAudioFileException | LineUnavailableException e) {
         }
-        if (Geometry.distanceFromPointToPoint(pos[0],pos[1],x[1],y[1]) < radius){
-            return new float[]{x[1],y[1]};
-        }
-        return null;
-    }
-
-    private boolean linePoint(float x1, float y1, float x2, float y2, float projX, float projY, float length){
-        float error = (float) 0.1;
-        float xProjSum = Math.abs(x2-projX) + Math.abs(x1-projX);
-        float yProjSum = Math.abs(y2-projY) + Math.abs(y1-projY);
-        float xSum = Math.abs(x2-x1);
-        float ySum = Math.abs(y2-y1);
-
-        boolean withinXBounds = (xProjSum < xSum + error) && (xProjSum > xSum - error);
-        boolean withinYBounds = (yProjSum < ySum + error) && (yProjSum > ySum - error);
-
-        //java.lang.System.out.println(xSum+error + " -- " + xProjSum + " | " + ySum+error + " -- " + yProjSum + " | " + "(" + x1 + "," + y1 + ") (" + x2 + "," + y2 + "), ball: (" + pos[0] + "," + pos[1] + ")");
-        //java.lang.System.out.println(withinXBounds + " " + withinYBounds);
-        return (withinXBounds && withinYBounds);
     }
 
     @Override

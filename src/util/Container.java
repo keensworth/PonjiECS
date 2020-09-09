@@ -31,7 +31,12 @@ public class Container<E> {
         containerClass = c;
     }
 
-    //TODO: Done??
+    /**
+     * Add data to container array
+     *
+     * @param data object to be stored in array
+     * @return index of data write
+     */
     public int add(E data){
         if (sparseDepth==0){
             if (write>=container.length){
@@ -60,6 +65,12 @@ public class Container<E> {
         return this.add(container.toArray());
     }
 
+    /**
+     * Add data to furthest write location (ignoring empty middle locations)
+     *
+     * @param data object to be stored in array
+     * @return index of data write
+     */
     public int append(E data){
         if (write>=container.length){
             container = doubleSize(container);
@@ -70,6 +81,12 @@ public class Container<E> {
         return write;
     }
 
+    /**
+     * Add array to container array
+     *
+     * @param data array of objects to add to array
+     * @return 32 bit integer, <31:16> array size, <15:0> index of first write
+     */
     public int add(E[] data){
         boolean first = true;
         int firstIndex = 0;
@@ -88,6 +105,13 @@ public class Container<E> {
         return ((count<<16)|(firstIndex&0xffff));
     }
 
+    /**
+     * Set data in array at a specific index
+     *
+     * @param index index of data write
+     * @param data object to be stored in array
+     * @return index of data write
+     */
     public int set(int index, E data){
         if (index>write){
             index = write;
@@ -116,6 +140,11 @@ public class Container<E> {
         }
     }
 
+    /**
+     * Remove first instance of data from array
+     *
+     * @param data object to be removed
+     */
     public void remove(E data){
         for (int index = 0; index < size+sparseDepth; index++){
             if (container[index] == data){

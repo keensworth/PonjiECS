@@ -13,6 +13,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Ellipse2D;
+import java.awt.image.BufferedImage;
 
 public class RenderSys extends System {
     private Display display;
@@ -37,6 +38,7 @@ public class RenderSys extends System {
 
         JFrame frame = new JFrame();
         display = new Display(width, height, 180, 50, 100);
+        display.setDoubleBuffered(true);
 
         frame.add(display, BorderLayout.CENTER);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -142,8 +144,15 @@ public class RenderSys extends System {
         @Override
         public void paintComponent(Graphics g){
             super.paintComponent(g);
-            Graphics2D g2d = (Graphics2D) g;
+            //Graphics2D g2d = (Graphics2D) g;
+            BufferedImage bufferImage = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
+
+            Graphics2D g2d = (Graphics2D)bufferImage.getGraphics();
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            // I used Graphics2D instead of Graphics here, because its more flexible and lets you do more things.
+            //Graphics2D g2 = (Graphics2D)bufferImage.getGraphics();
+            g2d.setColor(Color.BLACK);
+            //g2.fillRect(0, 0, width, height);
 
             try {
                 //Draw balls
@@ -198,6 +207,8 @@ public class RenderSys extends System {
                 GradientPaint gp = new GradientPaint(pointerBaseX, pointerBaseY , Color.red,pointerBaseX +  iComp, pointerBaseY + jComp ,  new Color(128,128,0,0), false);
                 g2d.setPaint(gp);
                 g2d.drawLine(pointerBaseX, pointerBaseY , pointerBaseX + (int)iComp, pointerBaseY + (int)jComp );
+
+                g.drawImage(bufferImage, 0, 0, null);
 
                 g2d.dispose();
             } catch (NullPointerException e){

@@ -46,7 +46,7 @@ public class Position extends Component {
     }
 
     public Position add(float[] position){
-        System.out.println("Position added: (" + position[0] + ", " + position[1] + ")");
+        //System.out.println("Position added: (" + position[0] + ", " + position[1] + ")");
         int index = this.position[0].add(position[0]);
         this.position[1].add(position[1]);
         //System.out.println("----------------------------" + index);

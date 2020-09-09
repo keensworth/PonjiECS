@@ -25,7 +25,6 @@ public class Application {
     private MovementSys movementSys;                  //update positions of moving entities
     private RenderSys renderSys;                      //color each object based on health, render to screen (paint screen)
 
-
     public Application() {
         ecs = new ECS(400,600);
 
@@ -68,29 +67,21 @@ public class Application {
     private void initScene(int eRadius){
         //POLYGONS MUST BE CREATED COUNTER-CLOCKWISE
 
+        for (int i = 0; i < 4; i++){
+            for (int j = 0; j < 4; j++){
+                int ballHealth = 100;
 
-        ecs.createEntity(
-                position.add(new float[]{200,300}),
-                health.add(100),
-                radius.add(eRadius),
-                ballSplit.add(2)
-        );
-        /*
-        ecs.createEntity(
-                position.add(new float[]{160,432}),
-                health.add(100),
-                radius.add(eRadius),
-                ballSplit.add(2)
-        );
+                //if (i%2==0 || j%2==0)
+                //    ballHealth = 100;
 
-        ecs.createEntity(
-                position.add(new float[]{240,432}),
-                health.add(100),
-                radius.add(eRadius),
-                ballSplit.add(2)
-        );
-
-         */
+                ecs.createEntity(
+                        position.add(new float[]{j*80 + 80,i*80 + 80}),
+                        health.add(ballHealth),
+                        radius.add(eRadius),
+                        ballSplit.add(2)
+                );
+            }
+        }
 
         /*
         ecs.createEntity(
@@ -119,8 +110,6 @@ public class Application {
         );
 
          */
-
-
         /*
         ecs.createEntity(
                 position.add(new float[]{200,400}),
@@ -135,7 +124,7 @@ public class Application {
     }
 
     private void run(){
-        double start,end;
+        double start,end,delta= 8;
 
         while(true){
             start = System.nanoTime();
@@ -143,11 +132,11 @@ public class Application {
 
             update((float)1/60);
 
-
             end = System.nanoTime();
-            while((end-start)<16000000){
+            while (end-start < 16000000){
                 end = System.nanoTime();
             }
+
         }
     }
 

@@ -19,7 +19,7 @@ public class Health extends Component {
     }
 
     public Health add(int health){
-        System.out.println("Health added: " + health);
+        //System.out.println("Health added: " + health);
         super.setLastWriteIndex(this.health.add(health));
         return this;
     }

@@ -29,7 +29,12 @@ public class ECS {
     public int width;
     public int height;
 
-
+    /**
+     * ECS constructor
+     *
+     * @param width width of game area
+     * @param height height of game area
+     */
     public ECS(int width, int height){
         entityTree = new EntNode(3);
         componentPool = new BitMask();
@@ -37,7 +42,11 @@ public class ECS {
         this.height = height;
     }
 
-
+    /**
+     * Central ECS pipeline that adds or removes entities and updates and updates systems
+     *
+     * @param delta time step in milliseconds
+     */
     public void update(final float delta) {
         //adds/removes entities to entityTree
         if (!entityAdd.isEmpty() || !entityRemove.isEmpty()) {
@@ -54,17 +63,24 @@ public class ECS {
         entityChange = false;
 
         //updates all systems
-        for (System system : systems)
+        for (System system : systems) {
             if (requireSystem == null || system.getClass() == requireSystem) {
                 requireSystem = system.update(delta, entityTree, componentPool, entityChange);
             }
+        }
         renderer.update(delta, entityTree, componentPool, entityChange);
+
 
 
         java.lang.System.out.println("\n");
     }
 
 
+    /**
+     * Add system(s) to the ECS
+     *
+     * @param systems System(s) to add
+     */
     public void addSystem(System... systems) {
         for (System system : systems) {
             system.setECS(this);
@@ -74,18 +90,32 @@ public class ECS {
         }
     }
 
+    /**
+     * Add a renderer to the ECS
+     *
+     * @param renderer designated rendering system
+     */
     public void addRenderer(System renderer){
         this.renderer = renderer;
         renderer.setECS(this);
         renderer.setMask(componentPool);
     }
 
-
+    /**
+     * Add component(s) to the ECS
+     *
+     * @param components Component(s) to add
+     */
     public void addComponent(Component... components) {
         componentPool.addComponent(components);
     }
 
-
+    /**
+     * Creates an entity with set components to the ECS
+     *
+     * @param components Component(s) given to the new entity
+     * @return newly created entity
+     */
     public Entity createEntity(Component... components) {
         int entityComponents = componentPool.get(components);
         java.lang.System.out.println("> > ECS.class - Entity E"+itEntityId+" added");
@@ -99,25 +129,12 @@ public class ECS {
         return entity;
     }
 
-    public void addEntityComponent(Entity entity, Component... components){
-        entityTree.removeEntity(entity);
-        for (Component component : components){
-            component.addEntity(entity.getEntityId(), component.getLastWriteIndex());
-            entity.addComponent(componentPool.get(components));
-        }
-        entityTree.addEntity(entity);
-    }
-
-    public void removeEntityComponent(Entity entity, Component... components){
-        entityTree.removeEntity(entity);
-        for (Component component : components){
-            component.removeEntity(entity.getEntityId());
-            entity.removeComponent(componentPool.get(components));
-        }
-        entityTree.addEntity(entity);
-    }
-
-
+    /**
+     * Removes an entity from the ECS
+     *
+     * @param entity entity to be removed
+     * @return removed entity
+     */
     public Entity destroyEntity(Entity entity)  {
         Component[] entityComponents = componentPool.getComponents(entity.getComponents());
 
@@ -127,17 +144,37 @@ public class ECS {
         java.lang.System.out.println("> > ECS.class - Entity E"+entity.getEntityId()+" destroyed");
         entityRemove.add(entity);
 
-        /*
-        try {
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File("C:/Users/Sargy/IdeaProjects/PonjiECS/resources/pop.wav").getAbsoluteFile());
-            Clip clip = AudioSystem.getClip();
-            clip.open(audioInputStream);
-            clip.start();
-        } catch (IOException | UnsupportedAudioFileException | LineUnavailableException e) {
-        }
-
-         */
         return entity;
+    }
+
+    /**
+     * Update an entity's components
+     *
+     * @param entity entity to be updated
+     * @param components Component(s) to add to the entity
+     */
+    public void addEntityComponent(Entity entity, Component... components){
+        entityTree.removeEntity(entity);
+        for (Component component : components){
+            component.addEntity(entity.getEntityId(), component.getLastWriteIndex());
+            entity.addComponent(componentPool.get(components));
+        }
+        entityTree.addEntity(entity);
+    }
+
+    /**
+     * Update an entity's components
+     *
+     * @param entity entity to be updated
+     * @param components Component(s) to be removed from the entity
+     */
+    public void removeEntityComponent(Entity entity, Component... components){
+        entityTree.removeEntity(entity);
+        for (Component component : components){
+            component.removeEntity(entity.getEntityId());
+            entity.removeComponent(componentPool.get(components));
+        }
+        entityTree.addEntity(entity);
     }
 
     public BitMask getComponentPool(){

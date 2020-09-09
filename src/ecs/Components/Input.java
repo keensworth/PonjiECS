@@ -22,7 +22,7 @@ public class Input extends Component {
     }
 
     public Input setControllable(){
-        System.out.println("Input added");
+        //System.out.println("Input added");
         super.setLastWriteIndex(0);
         return this;
     }

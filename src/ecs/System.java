@@ -20,7 +20,12 @@ public abstract class System {
     public abstract Class update(float dt, EntNode entityTree, BitMask componentMask, boolean entityChange);
     public abstract void exit();
 
-
+    /**
+     * Gets entities containing this system's required components
+     *
+     * @param entityTree EntNode tree that stores entities by components
+     * @return Entity array of entities in tree that match required components
+     */
     public Entity[] getEntities(EntNode entityTree){
         boolean empty = true;
         Container<Entity> entities =  entityTree.getEntities(bitMask);
@@ -47,6 +52,13 @@ public abstract class System {
         }
     }
 
+    /**
+     * Gets entities containing desired components
+     *
+     * @param entityTree EntNode tree that stores entities by components
+     * @param components Class array of desired components
+     * @return Entity array of entities in tree that match required components
+     */
     public Entity[] getEntities(EntNode entityTree, Class[] components){
         boolean empty = true;
         Container<Entity> entities =  entityTree.getEntities(ecs.getComponentPool().getFromClasses(components));
@@ -71,7 +83,14 @@ public abstract class System {
         }
     }
 
-
+    /**
+     * Retrieves the indices of entities in a certain component
+     *
+     * @param componentClass Class of desired component
+     * @param entities array of entities to get the indices of
+     * @param componentMask BitMask to check if entity contains particular component
+     * @return array of indices of entities that contain the component
+     */
     public int[] getComponentIndices(Class componentClass, Entity[] entities, BitMask componentMask){
         Component component = componentMask.getComponent(componentClass);
         int[] indices = new int[entities.length];

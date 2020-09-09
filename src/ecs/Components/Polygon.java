@@ -19,7 +19,7 @@ public class Polygon extends Component {
     }
 
     public Polygon add(java.awt.Polygon polygon){
-        System.out.println("Polygon added: " + polygon.toString());
+        //System.out.println("Polygon added: " + polygon.toString());
         super.setLastWriteIndex(this.polygon.add(polygon));
         return this;
     }

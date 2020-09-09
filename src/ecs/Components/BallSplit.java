@@ -19,7 +19,7 @@ public class BallSplit extends Component {
     }
 
     public BallSplit add(int ballSplit){
-        System.out.println("BallSplit added: " + ballSplit);
+        //System.out.println("BallSplit added: " + ballSplit);
         super.setLastWriteIndex(this.ballSplit.add(ballSplit));
         return this;
     }

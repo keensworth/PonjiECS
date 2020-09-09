@@ -22,12 +22,12 @@ public class NoCollide extends Component {
     }
 
     public void setNoCollide(int index, int instance){
-        System.out.println("NoCollide instance set: " + instance);
+        //System.out.println("NoCollide instance set: " + instance);
         this.noCollide.set(index, instance);
     }
 
     public NoCollide add(int instance){
-        System.out.println("NoCollide instance added: " + instance);
+        //System.out.println("NoCollide instance added: " + instance);
         super.setLastWriteIndex(this.noCollide.add(instance));
         return this;
     }

@@ -35,7 +35,7 @@ public class ControlSys extends System {
         //java.lang.System.out.println(velocityIndices[0]);
         
         if (entities[0]!=null){
-            if (input.isClicked()){//launch entity
+            if (input.isClicked()){ //launch entity
                 int[] click = input.getClick();
                 int i = click[0] - ecs.width/2;
                 int j = click[1] - ecs.height + 30;
@@ -49,7 +49,7 @@ public class ControlSys extends System {
                 input.reset();
                 return null;
             }
-        } else {//create new entity
+        } else { //create new entity
             Entity controllable = ecs.createEntity(
                     position.add(new float[]{(float)this.getECS().width/2,(float)this.getECS().height-30}),
                     velocity.add(new float[]{0,0}),

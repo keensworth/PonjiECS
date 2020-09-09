@@ -19,7 +19,7 @@ public class Radius extends Component {
     }
 
     public Radius add(int radius){
-        System.out.println("Radius added: " + radius);
+        //System.out.println("Radius added: " + radius);
         super.setLastWriteIndex(this.radius.add(radius));
         return this;
     }

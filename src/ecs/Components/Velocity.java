@@ -46,7 +46,7 @@ public class Velocity extends Component {
     }
 
     public Velocity add(float[] velocity){
-        System.out.println("Velocity added: (" + velocity[0] + ", " + velocity[1] + ")");
+        //System.out.println("Velocity added: (" + velocity[0] + ", " + velocity[1] + ")");
         int index = this.velocity[0].add(velocity[0]);
         this.velocity[1].add(velocity[1]);
         super.setLastWriteIndex(index);
