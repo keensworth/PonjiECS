@@ -1,6 +1,5 @@
 package ecs;
 
-import util.BitMask;
 import util.ETree.IndexNode;
 
 import java.lang.reflect.Field;

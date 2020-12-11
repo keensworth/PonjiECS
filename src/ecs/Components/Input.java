@@ -2,23 +2,17 @@ package ecs.Components;
 
 import ecs.Component;
 import ecs.Entity;
-import util.Container;
-
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.util.LinkedList;
 
 public class Input extends Component {
     private Entity controllable;
 
-    private int[] movedCoords;
-    private int[] clickedCoords;
+    private int[] mousePos;
+    private int[] clickPos;
     private boolean clicked = false;
 
     public Input(){
-        movedCoords = new int[2];
-        clickedCoords = new int[2];
+        mousePos = new int[2];
+        clickPos = new int[2];
     }
 
     public Input setControllable(){
@@ -35,24 +29,24 @@ public class Input extends Component {
         return this.controllable;
     }
 
-    public int[] getClick(){
-        return clickedCoords;
+    public int[] getClickPos(){
+        return clickPos;
     }
 
-    public int[] getMove(){
-        return movedCoords;
+    public int[] getMousePos(){
+        return mousePos;
     }
 
     public boolean isClicked(){
         return clicked;
     }
 
-    public void setClick(int[] click){
-        clickedCoords = click;
+    public void setClickPos(int[] clickPos){
+        this.clickPos = clickPos;
     }
 
-    public void setMove(int[] move){
-        movedCoords = move;
+    public void setMousePos(int[] move){
+        mousePos = move;
     }
 
     public void setClicked(){

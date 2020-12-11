@@ -23,6 +23,8 @@ public class Entity {
 
 
     public boolean contains(int compareMask){
+        if (compareMask == 0)
+            return false;
         return (componentMask & compareMask) == compareMask;
     }
 

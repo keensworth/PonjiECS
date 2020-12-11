@@ -86,7 +86,7 @@ public class Geometry {
     }
 
     /**
-     * Get the normalized magnitude of a vector
+     * Get the normalized magnitude of a vector: p1 -> p2
      *
      * @param x1 x coordinate of first point
      * @param y1 y coordinate of first point

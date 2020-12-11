@@ -1,11 +1,9 @@
 package ecs.Systems;
 
-import ecs.Component;
-import ecs.ECS;
 import ecs.Entity;
 import ecs.System;
 import ecs.Components.*;
-import util.BitMask;
+import util.ComponentMask;
 import util.ETree.EntNode;
 
 public class MovementSys extends System {
@@ -17,7 +15,7 @@ public class MovementSys extends System {
     }
 
     @Override
-    public Class update(float dt, EntNode entityTree, BitMask componentMask, boolean entityChange) {
+    public Class update(float dt, EntNode entityTree, ComponentMask componentMask, boolean entityChange) {
         java.lang.System.out.println("Updating MovementSys");
         Entity[] entities = getEntities(entityTree);
 

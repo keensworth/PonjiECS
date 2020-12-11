@@ -3,61 +3,41 @@ package ecs.Systems;
 import ecs.Components.*;
 import ecs.Entity;
 import ecs.System;
-import util.BitMask;
+import util.ComponentMask;
 import util.Container;
 import util.ETree.CollisionNode;
 import util.ETree.EntNode;
 import util.Geometry;
-
-import javax.sound.sampled.*;
-import javax.swing.*;
-import java.awt.geom.Rectangle2D;
-import java.io.File;
-import java.io.IOException;
+import util.Polygon;
 
 public class CollisionSys extends System {
-    private Entity[] entities;
+    private Entity[] balls;
 
-    private BitMask components;
+    private ComponentMask components;
     private Position position;
     private Velocity velocity;
     private Radius radius;
     private Health health;
     private NoCollide noCollide;
-    private Polygon polygon;
+    private Shape shape;
 
     private int[] entityPositionIndices;
     private int[] ballVelocityIndices;
     private int[] ballRadiusIndices;
 
-    
+
     public CollisionSys() {
         super(Position.class, Radius.class);
     }
 
     @Override
-    public Class update(float dt, EntNode entityTree, BitMask componentMask, boolean indexChange) {
+    public Class update(float dt, EntNode entityTree, ComponentMask componentMask, boolean indexChange) {
         java.lang.System.out.println("Updating CollisionSys");
-        components = componentMask;
-        int worldWidth = this.getECS().width;
-        int worldHeight = this.getECS().height;
 
-        //entities = getEntities(entityTree);
-        entities = getEntities(entityTree, new Class[]{Position.class});
-
-        entityPositionIndices = getComponentIndices(Position.class, entities, componentMask);
-        ballVelocityIndices = getComponentIndices(Velocity.class, entities, componentMask);
-        ballRadiusIndices = getComponentIndices(Radius.class, entities, componentMask);
-
-        position = (Position) componentMask.getComponent(Position.class);
-        health = (Health) componentMask.getComponent(Health.class);
-        velocity = (Velocity) componentMask.getComponent(Velocity.class);
-        radius = (Radius) componentMask.getComponent(Radius.class);
-        noCollide = (NoCollide) componentMask.getComponent(NoCollide.class);
-        polygon = (Polygon) componentMask.getComponent(Polygon.class);
+        updateValues(dt, entityTree, componentMask, indexChange);
 
         //traverse entities, build collision tree
-        CollisionNode collisionTree = buildCollisionTree(componentMask, worldWidth, worldHeight);
+        CollisionNode collisionTree = buildCollisionTree(componentMask, this.ecs.width, this.ecs.height);
 
         //traverse collision tree, collect values
         Container<Entity> concatenated = concatenate(collisionTree);
@@ -70,30 +50,49 @@ public class CollisionSys extends System {
 
         //Narrow Phase analysis of collision container
         Container<Entity>[] narrowPhase = refineCollisions(true, broadPhase);
-        if (narrowPhase.length==0) {
+        if (narrowPhase.length==0){
             return MovementSys.class;
         }
 
         return null;
     }
 
-    private CollisionNode buildCollisionTree(BitMask componentMask, int worldWidth, int worldHeight){
+    private void updateValues(float dt, EntNode entityTree, ComponentMask componentMask, boolean indexChange){
+        components = componentMask;
+        java.lang.System.out.println(Integer.toBinaryString(components.getFromClasses(Polygon.class)));
+        int worldWidth = this.getECS().width;
+        int worldHeight = this.getECS().height;
+
+        //entities = getEntities(entityTree);
+        balls = getEntities(entityTree, new Class[]{Radius.class});
+
+        entityPositionIndices = getComponentIndices(Position.class, balls, componentMask);
+        ballVelocityIndices = getComponentIndices(Velocity.class, balls, componentMask);
+        ballRadiusIndices = getComponentIndices(Radius.class, balls, componentMask);
+
+        position = (Position) componentMask.getComponent(Position.class);
+        health = (Health) componentMask.getComponent(Health.class);
+        velocity = (Velocity) componentMask.getComponent(Velocity.class);
+        radius = (Radius) componentMask.getComponent(Radius.class);
+        noCollide = (NoCollide) componentMask.getComponent(NoCollide.class);
+        shape = (Shape) componentMask.getComponent(Shape.class);
+    }
+
+    private CollisionNode buildCollisionTree(ComponentMask componentMask, int worldWidth, int worldHeight){
         CollisionNode tempCollisionTree = new CollisionNode(worldWidth, true, -1);
 
         //Build collision tree w/ entities
-        for (int index = 0; index < entities.length; index++){
-            Entity entity = entities[index];
+        for (int index = 0; index < balls.length; index++){
+            Entity entity = balls[index];
 
             float minX, maxX, minY, maxY;
 
-            if (entity.contains(componentMask.get(polygon))) {
-                java.awt.Polygon objectPoly = polygon.getPolygon(polygon.getEntityIndex(entity.getEntityId()));
+            if (entity.contains(componentMask.get(shape))) {
+                util.Polygon objectPoly = shape.getShape(shape.getEntityIndex(entity.getEntityId()));
 
-                Rectangle2D boundingBox = objectPoly.getBounds2D();
-
-                minX = (float) boundingBox.getMinX();
-                maxX = (float) boundingBox.getMaxX();
-                //java.lang.System.out.print("Polygon: ");
+                minX = objectPoly.minX;
+                maxX = objectPoly.maxX;
+                //java.lang.System.out.print("Shape: ");
 
             } else {
                 float[] entityPos = position.getPosition(entityPositionIndices[index]);
@@ -137,15 +136,15 @@ public class CollisionSys extends System {
     private Container<Entity>[] buildCollisionGroups(Container concatenated){
         Container<Entity> seenEntities = new Container(Entity.class);
 
-        Container<Entity>[] possibleCollisions = new Container[entities.length];
-        for (int i = 0; i < entities.length; i++){
+        Container<Entity>[] possibleCollisions = new Container[balls.length];
+        for (int i = 0; i < balls.length; i++){
             possibleCollisions[i] = new Container(Entity.class);
         }
 
         for (int i = 0; i < concatenated.getSparseSize(); i++){
             Entity entity = (Entity) concatenated.get(i);
             if (!(seenEntities.contains(entity))){
-                possibleCollisions[getIndex(entities, entity)].add(seenEntities);
+                possibleCollisions[getIndex(balls, entity)].add(seenEntities);
                 seenEntities.add(entity);
             } else {
                 seenEntities.remove(entity);
@@ -161,7 +160,7 @@ public class CollisionSys extends System {
         for (int index = 0; index < possibleCollisions.length; index++){
             Container<Entity> collisionsToCheck = new Container(Entity.class);
 
-            Entity entity = entities[index];
+            Entity entity = balls[index];
             //Scan entity's possible collisions and check:
             //     1.) if they are worth checking more precisely (broad phase)
             //     2.) overlapping (narrow phase)
@@ -180,18 +179,17 @@ public class CollisionSys extends System {
                 if (collisionOccurred(narrowPhase, entity, otherEntity, index)){
                     if (narrowPhase){
                         resolveCollisions(entity,otherEntity);
-                    } else {
-                        collisionsToCheck.add(otherEntity);
-                        collisions++;
                     }
+                    collisionsToCheck.add(otherEntity);
+                    collisions++;
                 }
             }
             possibleCollisions[index] = collisionsToCheck;
         }
         try {
             if (!noCollideOccurred && narrowPhase) {
-                for (int i = 0; i < entities.length; i++) {
-                    Entity entity = entities[i];
+                for (int i = 0; i < balls.length; i++) {
+                    Entity entity = balls[i];
                     if (entity.contains(components.getFromClasses(NoCollide.class))) {
                         noCollide.setNoCollide(noCollide.getEntityIndex(entity.getEntityId()), -1);
                     }
@@ -215,14 +213,14 @@ public class CollisionSys extends System {
         float e2MaxY = 0, e2MinY = 0;
         float[] e1Pos = {0,0}, e2Pos = {0,0};
         int e1Radius = 0, e2Radius = 0;
-        java.awt.Polygon poly = null;
+        util.Polygon poly = null;
 
         //Check type of e1
         if (e1.contains(components.getFromClasses(Polygon.class))) {
             e1IsPolygon = true;
-            poly = polygon.getPolygon(polygon.getEntityIndex(e1.getEntityId()));
-            e1MinY = (float) poly.getBounds2D().getMinY();
-            e1MaxY = (float) poly.getBounds2D().getMaxY();
+            poly = shape.getShape(shape.getEntityIndex(e1.getEntityId()));
+            e1MinY = poly.minY;
+            e1MaxY = poly.maxY;
         } else {
             e1Pos = position.getPosition(entityPositionIndices[e1Index]);
             e1Radius = radius.getRadius(ballRadiusIndices[e1Index]);
@@ -234,9 +232,9 @@ public class CollisionSys extends System {
         //Check type of e2
         if (e2.contains(components.getFromClasses(Polygon.class))) {
             e2IsPolygon = true;
-            poly = polygon.getPolygon(polygon.getEntityIndex(e2.getEntityId()));
-            e2MinY = (float) poly.getBounds2D().getMinY();
-            e2MaxY = (float) poly.getBounds2D().getMaxY();
+            poly = shape.getShape(shape.getEntityIndex(e2.getEntityId()));
+            e2MinY = poly.minY;
+            e2MaxY = poly.maxY;
         } else {
             e2Pos = position.getPosition(position.getEntityIndex(e2.getEntityId()));
             e2Radius = radius.getRadius(ballRadiusIndices[e1Index]);
@@ -278,17 +276,17 @@ public class CollisionSys extends System {
         return (Math.pow(e1Radius + e2Radius,2) > Math.pow(e1Pos[0] - e2Pos[0],2) + Math.pow(e1Pos[1] - e2Pos[1],2));
     }
 
-    private boolean circleIsInPolygon(java.awt.Polygon poly, int radius, float[] pos){
+    private boolean circleIsInPolygon(Polygon poly, int radius, float[] pos){
         //java.lang.System.out.println("--Checking circle-polygon");
-        int[] xPoints = poly.xpoints;
-        int[] yPoints = poly.ypoints;
-        for (int side = 0; side < poly.npoints; side++){
-            int x2, y2;
-            int x1 = xPoints[side];
-            int y1 = yPoints[side];
+        float[] xPoints = poly.xPoints;
+        float[] yPoints = poly.yPoints;
+        for (int side = 0; side < poly.sides; side++){
+            float x2, y2;
+            float x1 = xPoints[side];
+            float y1 = yPoints[side];
 
             // get side endpoints
-            if (side==poly.npoints-1){
+            if (side==poly.sides-1){
                 x2 = xPoints[0];
                 y2 = yPoints[0];
             } else {
@@ -371,7 +369,6 @@ public class CollisionSys extends System {
         if (destroyBothEntities(e1Health, e2Health, healthDifference)){
             this.ecs.destroyEntity(e1);
             this.ecs.destroyEntity(e2);
-            playDeathSound();
             return;
         }
 
@@ -386,11 +383,9 @@ public class CollisionSys extends System {
             if (e1Healthier){
                 health.setHealth(health.getEntityIndex(e1.getEntityId()), healthDifference);
                 this.ecs.destroyEntity(e2);
-                playDeathSound();
             } else {
                 health.setHealth(health.getEntityIndex(e2.getEntityId()), healthDifference);
                 this.ecs.destroyEntity(e1);
-                playDeathSound();
             }
             return;
         }
@@ -400,24 +395,20 @@ public class CollisionSys extends System {
             ballSplit(e1, e2, healthDifference, 2);
             this.ecs.destroyEntity(e1);
             this.ecs.destroyEntity(e2);
-            playDeathSound();
         }
         else if (!e1Healthier && e1Moving) {
             ballSplit(e2, e1, healthDifference, 2);
             this.ecs.destroyEntity(e1);
             this.ecs.destroyEntity(e2);
-            playDeathSound();
         }
         else {
             if (e1Moving) {
                 health.setHealth(health.getEntityIndex(e1.getEntityId()), healthDifference);
                 this.ecs.destroyEntity(e2);
-                playDeathSound();
             }
             else if (e2Moving) {
                 health.setHealth(health.getEntityIndex(e2.getEntityId()), healthDifference);
                 this.ecs.destroyEntity(e1);
-                playDeathSound();
             }
         }
     }
@@ -437,29 +428,29 @@ public class CollisionSys extends System {
             eBall = e1;
         }
 
-        java.awt.Polygon poly = polygon.getPolygon(polygon.getEntityIndex(ePoly.getEntityId()));
+        Polygon poly = shape.getShape(shape.getEntityIndex(ePoly.getEntityId()));
         int ballRadius = radius.getRadius(radius.getEntityIndex(eBall.getEntityId()));
         float[] ballPos = position.getPosition(position.getEntityIndex(eBall.getEntityId()));
         float[] ballVel = velocity.getVelocity(velocity.getEntityIndex(eBall.getEntityId()));
 
-        int[] segmentX = new int[2];
-        int[] segmentY = new int[2];
+        float[] segmentX = new float[2];
+        float[] segmentY = new float[2];
         float[] endpoint = new float[2];
 
         float projectionX;
         float projectionY;
         float distance = 0;
-        for (int side = 0; side < poly.npoints; side++){
-            int x2, y2;
-            int x1 = poly.xpoints[side];
-            int y1 = poly.ypoints[side];
+        for (int side = 0; side < poly.sides; side++){
+            float x2, y2;
+            float x1 = poly.xPoints[side];
+            float y1 = poly.yPoints[side];
 
-            if (side==poly.npoints-1){
-                x2 = poly.xpoints[0];
-                y2 = poly.ypoints[0];
+            if (side==poly.sides-1){
+                x2 = poly.xPoints[0];
+                y2 = poly.yPoints[0];
             } else {
-                x2 = poly.xpoints[side+1];
-                y2 = poly.ypoints[side+1];
+                x2 = poly.xPoints[side+1];
+                y2 = poly.yPoints[side+1];
             }
 
             // get length of the line
@@ -478,8 +469,8 @@ public class CollisionSys extends System {
             if (onSegment){
                 distance = Geometry.distanceFromPointToPoint(projectionX, projectionY, ballPos[0], ballPos[1]);
                 if (distance < ballRadius) {
-                    segmentX = new int[]{x1, x2};
-                    segmentY = new int[]{y1, y2};
+                    segmentX = new float[]{x1, x2};
+                    segmentY = new float[]{y1, y2};
                     break;
                 }
             }
@@ -495,8 +486,8 @@ public class CollisionSys extends System {
                     endpoint[0] = x2;
                     endpoint[1] = y2;
                 }
-                segmentX = new int[]{x1,x2};
-                segmentY = new int[]{y1,y2};
+                segmentX = new float[]{x1,x2};
+                segmentY = new float[]{y1,y2};
                 break;
             }
         }
@@ -606,27 +597,33 @@ public class CollisionSys extends System {
         float[] indexVel;
         float[] newPos = entityPos;
 
-        if (minY <= 0 || maxY >= worldHeight) {
+        float leftEdge = (float)-worldWidth/2;
+        float rightEdge = (float)worldWidth/2;
+        float topEdge = (float)worldHeight/2;
+        float bottomEdge = (float)-worldHeight/2;
+
+
+        if (minY <= bottomEdge || maxY >= topEdge) {
             indexVel = velocity.getVelocity(ballVelocityIndices[index]);
             velocity.setVelocity(new float[]{indexVel[0], -indexVel[1]}, ballVelocityIndices[index]);
-            if (minY <= 0) {
-                newPos[1] = entityPos[1] - minY;
+            if (minY <= bottomEdge) {
+                newPos[1] = entityPos[1] + (bottomEdge - minY);
                 position.setYPos(entityPositionIndices[index], newPos[1]);
             } else {
-                newPos[1] = entityPos[1] + (worldHeight - maxY);
+                newPos[1] = entityPos[1] - (maxY - topEdge);
                 position.setYPos(entityPositionIndices[index], newPos[1]);
             }
 
             //this.getECS().destroyEntity(entity);
         } else {
-            if (minX <= 0 || maxX >= worldWidth) {
+            if (minX <= leftEdge || maxX >= rightEdge) {
                 indexVel = velocity.getVelocity(ballVelocityIndices[index]);
                 velocity.setVelocity(new float[]{-indexVel[0], indexVel[1]}, ballVelocityIndices[index]);
-                if (minX <= 0) {
-                    newPos[0] = entityPos[0] - minX;
+                if (minX <= leftEdge) {
+                    newPos[0] = entityPos[0] + (leftEdge - minX);
                     position.setXPos(entityPositionIndices[index], newPos[0]);
                 } else {
-                    newPos[0] = entityPos[0] + (worldWidth - maxX);
+                    newPos[0] = entityPos[0] - (maxX - rightEdge);
                     position.setXPos(entityPositionIndices[index], newPos[0]);
                 }
 
@@ -670,16 +667,6 @@ public class CollisionSys extends System {
             if (arr[i] == entity)
                 return i;
         return -1;
-    }
-
-    private void playDeathSound(){
-        try {
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File("C:/Users/Sargy/IdeaProjects/PonjiECS/assets/pop2.wav").getCanonicalFile());
-            Clip clip = AudioSystem.getClip();
-            clip.open(audioInputStream);
-            clip.start();
-        } catch (IOException | UnsupportedAudioFileException | LineUnavailableException e) {
-        }
     }
 
     @Override

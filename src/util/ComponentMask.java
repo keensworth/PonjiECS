@@ -2,11 +2,11 @@ package util;
 
 import ecs.Component;
 
-public class BitMask {
+public class ComponentMask {
     private int bitMask;
     private Container<Component> components;
 
-    BitMask(){
+    ComponentMask(){
         this.components = new Container(Component.class);
         this.update();
     }
@@ -16,7 +16,7 @@ public class BitMask {
      *
      * @param components component(s) to be represented
      */
-    public BitMask(Component... components){
+    public ComponentMask(Component... components){
         this.components = new Container(Component.class);
         for (Component component : components){
             this.components.add(component);

@@ -1,19 +1,16 @@
 package ecs;
 
-import util.BitMask;
+import ecs.Events.EventManager;
+import graphic.Window;
+import util.ComponentMask;
 import util.ETree.EntNode;
 
-import javax.sound.sampled.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-import static java.lang.Integer.toBinaryString;
-
 public class ECS {
 
-    private BitMask componentPool;
+    private ComponentMask componentPool;
     private EntNode entityTree;
 
     private int itEntityId = 1;
@@ -21,9 +18,13 @@ public class ECS {
 
     private List<System> systems = new LinkedList<>();
     private System renderer;
+    public Window window;
+
     private Class requireSystem = null;
 
-    private List<Entity> entityRemove = new LinkedList<>();
+    public EventManager eventManager;
+
+    public List<Entity> entityRemove = new LinkedList<>();
     private List<Entity> entityAdd = new LinkedList<>();
 
     public int width;
@@ -37,9 +38,10 @@ public class ECS {
      */
     public ECS(int width, int height){
         entityTree = new EntNode(3);
-        componentPool = new BitMask();
+        componentPool = new ComponentMask();
         this.width = width;
         this.height = height;
+        window = null;
     }
 
     /**
@@ -69,10 +71,7 @@ public class ECS {
             }
         }
         renderer.update(delta, entityTree, componentPool, entityChange);
-
-
-
-        java.lang.System.out.println("\n");
+        eventManager.update();
     }
 
 
@@ -99,6 +98,10 @@ public class ECS {
         this.renderer = renderer;
         renderer.setECS(this);
         renderer.setMask(componentPool);
+    }
+
+    public void addEventManager(EventManager eventManager){
+        this.eventManager = eventManager;
     }
 
     /**
@@ -177,7 +180,7 @@ public class ECS {
         entityTree.addEntity(entity);
     }
 
-    public BitMask getComponentPool(){
+    public ComponentMask getComponentPool(){
         return componentPool;
     }
 
@@ -185,6 +188,14 @@ public class ECS {
         for (System system : systems)
             system.exit();
         renderer.exit();
+    }
+
+    public void setWindow(Window window){
+        this.window = window;
+    }
+
+    public Window getWindow(){
+        return window;
     }
 
 }

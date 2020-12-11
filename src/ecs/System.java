@@ -1,11 +1,8 @@
 package ecs;
 
-import util.BitMask;
+import util.ComponentMask;
 import util.Container;
 import util.ETree.EntNode;
-import util.ETree.IndexNode;
-
-import static java.lang.Integer.toBinaryString;
 
 public abstract class System {
     public ECS ecs;
@@ -17,7 +14,7 @@ public abstract class System {
     }
 
 
-    public abstract Class update(float dt, EntNode entityTree, BitMask componentMask, boolean entityChange);
+    public abstract Class update(float dt, EntNode entityTree, ComponentMask componentMask, boolean entityChange);
     public abstract void exit();
 
     /**
@@ -88,10 +85,10 @@ public abstract class System {
      *
      * @param componentClass Class of desired component
      * @param entities array of entities to get the indices of
-     * @param componentMask BitMask to check if entity contains particular component
+     * @param componentMask ComponentMask to check if entity contains particular component
      * @return array of indices of entities that contain the component
      */
-    public int[] getComponentIndices(Class componentClass, Entity[] entities, BitMask componentMask){
+    public int[] getComponentIndices(Class componentClass, Entity[] entities, ComponentMask componentMask){
         Component component = componentMask.getComponent(componentClass);
         int[] indices = new int[entities.length];
 
@@ -107,7 +104,7 @@ public abstract class System {
     }
 
 
-    public void setMask(BitMask componentPool){
+    public void setMask(ComponentMask componentPool){
         bitMask = componentPool.getFromClasses(components);
     }
 
