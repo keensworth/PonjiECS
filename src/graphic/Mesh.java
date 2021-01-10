@@ -41,6 +41,7 @@ public class Mesh {
 
     private int vertexCount=0;
 
+    //VAO w/o normals
     public Mesh(float[] positions, int[] indices, float[] colors) {
         FloatBuffer posBuffer = null;
         FloatBuffer colorBuffer;
@@ -93,6 +94,7 @@ public class Mesh {
         }
     }
 
+    //VAO w/ normals
     public Mesh(float[] positions, int[] indices, float[] colors, float[] normals) {
         FloatBuffer posBuffer = null;
         FloatBuffer colorBuffer;
@@ -155,6 +157,7 @@ public class Mesh {
         }
     }
 
+    //VAO w/o color (redundant)
     public Mesh(float[] positions, float[] normals) {
         FloatBuffer posBuffer = null;
         FloatBuffer normalBuffer;
@@ -202,24 +205,6 @@ public class Mesh {
     }
 
     protected void initRender() {
-        /*
-        Texture texture = material.getTexture();
-        if (texture != null) {
-            // Activate first texture bank
-            glActiveTexture(GL_TEXTURE0);
-            // Bind the texture
-            glBindTexture(GL_TEXTURE_2D, texture.getId());
-        }
-        Texture normalMap = material.getNormalMap();
-        if (normalMap != null) {
-            // Activate first texture bank
-            glActiveTexture(GL_TEXTURE1);
-            // Bind the texture
-            glBindTexture(GL_TEXTURE_2D, normalMap.getId());
-        }
-
-         */
-
         // Choose VAO to draw
         glBindVertexArray(getVaoId());
     }
@@ -239,21 +224,6 @@ public class Mesh {
 
         endRender();
     }
-/*
-    public void renderList(List<GameItem> gameItems, Consumer<GameItem> consumer) {
-        initRender();
-
-        for (GameItem gameItem : gameItems) {
-            // Set up data required by GameItem
-            consumer.accept(gameItem);
-            // Render this game item
-            glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
-        }
-
-        endRender();
-    }
-
- */
 
     public void cleanUp() {
         glDisableVertexAttribArray(0);
