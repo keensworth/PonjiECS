@@ -39,7 +39,7 @@ public class Mesh {
 
     protected final List<Integer> vboIdList;
 
-    private final int vertexCount;
+    private int vertexCount=0;
 
     public Mesh(float[] positions, int[] indices, float[] colors) {
         FloatBuffer posBuffer = null;
@@ -89,6 +89,106 @@ public class Mesh {
             }
             if (indicesBuffer != null) {
                 MemoryUtil.memFree(indicesBuffer);
+            }
+        }
+    }
+
+    public Mesh(float[] positions, int[] indices, float[] colors, float[] normals) {
+        FloatBuffer posBuffer = null;
+        FloatBuffer colorBuffer;
+        FloatBuffer normalBuffer;
+        IntBuffer indicesBuffer = null;
+        try {
+            vertexCount = indices.length;
+            vboIdList = new ArrayList<>();
+
+            vaoId = glGenVertexArrays();
+            glBindVertexArray(vaoId);
+
+            // Position VBO
+            int vboId = glGenBuffers();
+            vboIdList.add(vboId);
+            posBuffer = MemoryUtil.memAllocFloat(positions.length);
+            posBuffer.put(positions).flip();
+            glBindBuffer(GL_ARRAY_BUFFER, vboId);
+            glBufferData(GL_ARRAY_BUFFER, posBuffer, GL_STATIC_DRAW);
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+
+            if (colors!=null) {
+                // Color   VBO
+                int colorVboId = glGenBuffers();
+                colorBuffer = MemoryUtil.memAllocFloat(colors.length);
+                colorBuffer.put(colors).flip();
+                glBindBuffer(GL_ARRAY_BUFFER, colorVboId);
+                glBufferData(GL_ARRAY_BUFFER, colorBuffer, GL_STATIC_DRAW);
+                glEnableVertexAttribArray(1);
+                glVertexAttribPointer(1, 4, GL_FLOAT, false, 0, 0);
+            }
+
+            // Normal   VBO
+            int normalVboId = glGenBuffers();
+            normalBuffer = MemoryUtil.memAllocFloat(normals.length);
+            normalBuffer.put(normals).flip();
+            glBindBuffer(GL_ARRAY_BUFFER, normalVboId);
+            glBufferData(GL_ARRAY_BUFFER, normalBuffer, GL_STATIC_DRAW);
+            glEnableVertexAttribArray(1);
+            glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
+
+            // Index VBO
+            vboId = glGenBuffers();
+            vboIdList.add(vboId);
+            indicesBuffer = MemoryUtil.memAllocInt(indices.length);
+            indicesBuffer.put(indices).flip();
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboId);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL_STATIC_DRAW);
+
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindVertexArray(0);
+        } finally {
+            if (posBuffer != null) {
+                MemoryUtil.memFree(posBuffer);
+            }
+            if (indicesBuffer != null) {
+                MemoryUtil.memFree(indicesBuffer);
+            }
+        }
+    }
+
+    public Mesh(float[] positions, float[] normals) {
+        FloatBuffer posBuffer = null;
+        FloatBuffer normalBuffer;
+        try {
+            vboIdList = new ArrayList<>();
+
+            vaoId = glGenVertexArrays();
+            glBindVertexArray(vaoId);
+
+            // Position VBO
+            int vboId = glGenBuffers();
+            vboIdList.add(vboId);
+            posBuffer = MemoryUtil.memAllocFloat(positions.length);
+            posBuffer.put(positions).flip();
+            glBindBuffer(GL_ARRAY_BUFFER, vboId);
+            glBufferData(GL_ARRAY_BUFFER, posBuffer, GL_STATIC_DRAW);
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+
+            // Normal   VBO
+            int normalVboId = glGenBuffers();
+            normalBuffer = MemoryUtil.memAllocFloat(normals.length);
+            normalBuffer.put(normals).flip();
+            glBindBuffer(GL_ARRAY_BUFFER, normalVboId);
+            glBufferData(GL_ARRAY_BUFFER, normalBuffer, GL_STATIC_DRAW);
+            glEnableVertexAttribArray(1);
+            glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
+
+
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindVertexArray(0);
+        } finally {
+            if (posBuffer != null) {
+                MemoryUtil.memFree(posBuffer);
             }
         }
     }
