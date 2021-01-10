@@ -15,6 +15,7 @@ public class RenderSys extends System {
     private Rotation rotation;
     private Health health;
     private Radius radius;
+    private World world;
 
     private int[] ballHealthIndices, ballPositionIndices, ballRadiusIndices;
 
@@ -42,10 +43,9 @@ public class RenderSys extends System {
         float[] cameraRot = rotation.getRotation(rotation.getEntityIndex(camera[0].getEntityId()));
 
         renderer.prepare(window, cameraPos, cameraRot);
-        //renderer.defaultRender();
-        //renderer.renderExample((float) 0);
-        //renderScene();
+        renderScene();
         renderBalls();
+        //renderParticles();
         //renderHUD();
 
         window.update();
@@ -57,6 +57,10 @@ public class RenderSys extends System {
             renderer.renderCircles(balls, position, health, radius, ballPositionIndices, ballRadiusIndices, ballHealthIndices);
     }
 
+    private void renderScene(){
+        renderer.renderScene(world.getWorld());
+    }
+
     private void updateValues(float dt, EntNode entityTree, ComponentMask componentMask, boolean entityChange){
         balls = getEntities(entityTree, new Class[]{Radius.class});
         camera = getEntities(entityTree, new Class[]{Camera.class});
@@ -66,6 +70,7 @@ public class RenderSys extends System {
         radius = (Radius) componentMask.getComponent(Radius.class);
         rotation = (Rotation) componentMask.getComponent(Rotation.class);
         input = (Input) componentMask.getComponent(Input.class);
+        world = (World)componentMask.getComponent(World.class);
 
         ballHealthIndices = getComponentIndices(Health.class, balls, componentMask);
         ballPositionIndices = getComponentIndices(Position.class, balls, componentMask);
