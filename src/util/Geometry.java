@@ -106,4 +106,52 @@ public class Geometry {
 
         return normal;
     }
+
+    public static float[] norm3D(float[] vector){
+        float squaredSum = vector[0]*vector[0] + vector[1]*vector[1] + vector[2]*vector[2];
+        float vectorizer = invSqrt(squaredSum);
+        float[] normalized = new float[]{
+                vector[0]*vectorizer,
+                vector[1]*vectorizer,
+                vector[2]*vectorizer
+        };
+        return normalized;
+    }
+
+    public static float[] normal(float[] aPoint, float[] bPoint, float[] nPoint){
+        float[] vectorA = new float[]{
+                aPoint[0]-nPoint[0],
+                aPoint[1]-nPoint[1],
+                aPoint[2]-nPoint[2]
+        };
+        float[] vectorB = new float[]{
+                bPoint[0]-nPoint[0],
+                bPoint[1]-nPoint[1],
+                bPoint[2]-nPoint[2]
+        };
+        return norm3D(crossProduct(vectorA, vectorB));
+    }
+
+    public static float[] crossProduct(float[] vectorA, float[] vectorB){
+        return new float[]{
+                vectorA[1]*vectorB[2]-vectorA[2]*vectorB[1],
+                vectorA[2]*vectorB[0]-vectorA[0]*vectorB[2],
+                vectorA[0]*vectorB[1]-vectorA[1]*vectorB[0]
+        };
+    }
+
+    /**
+     * Accurate approximation for the inverse (reciprocal) of a floating-point square root.
+     *
+     * @param x
+     * @return float square root
+     */
+    public static float invSqrt(float x) {
+        float xhalf = 0.5f * x;
+        int i = Float.floatToIntBits(x);
+        i = 0x5f3759df - (i >> 1);
+        x = Float.intBitsToFloat(i);
+        x *= (1.5f - xhalf * x * x);
+        return x;
+    }
 }
