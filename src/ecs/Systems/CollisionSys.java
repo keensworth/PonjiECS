@@ -51,7 +51,8 @@ public class CollisionSys extends System {
         //Narrow Phase analysis of collision container
         Container<Entity>[] narrowPhase = refineCollisions(true, broadPhase);
         if (narrowPhase.length==0){
-            return MovementSys.class;
+            //return MovementSys.class;
+            return null;
         }
 
         return null;

@@ -26,7 +26,8 @@ public class MovementSys extends System {
         velocity = (Velocity) componentMask.getComponent(Velocity.class);
 
         if (velocityIndices.length==0){
-            return ControlSys.class;
+            //return ControlSys.class;
+            return null;
         }
         else { //update positions of entities
             for (int index = 0; index < entities.length; index++) {

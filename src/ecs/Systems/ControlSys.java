@@ -59,7 +59,7 @@ public class ControlSys extends System {
             input.setControllable(controllable);
         }
 
-        return InputSys.class;
+        return null;
     }
 
     @Override

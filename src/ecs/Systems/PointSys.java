@@ -30,7 +30,8 @@ public class PointSys extends System{
             java.lang.System.out.println(points.getPoints());
         }
 
-        return MovementSys.class;
+        //return MovementSys.class;
+        return null;
     }
 
     @Override
