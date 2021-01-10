@@ -14,19 +14,20 @@ public class Application {
     private Position position;                        //object position
     private Rotation rotation;                        //object rotation
     private Velocity velocity;                        //object velocity
-    private NoCollide noCollide;
+    private NoCollide noCollide;                      //noCollide grouping
     private Health health;                            //object health
     private Camera camera;                            //camera
     //private Render render;                          //current color base
     private Input input;                              //keeps track of user input
     private Shape polygon;
     private Points points;
-    //private World world = new World(800,800);
+    private World world;                              //stores terrain meshes
 
     //------Initialize Systems---------//
-    private InputSys inputSys;
+    private InputSys inputSys;                        //fetch input from GLFW
     private ControlSys controlSys;                    //check for input (click, vector) and launch launcher
     private CollisionSys collisionSys;                //build collision tree
+    private ProceduralSys proceduralSys;              //procedurally generate terrain depending on player location
     private PointSys pointSys;
     private MovementSys movementSys;                  //update positions of moving entities
     private RenderSys renderSys;                      //color each object based on health, render to screen (paint screen)
@@ -37,13 +38,9 @@ public class Application {
     protected final float PI = (float) 3.14159;
     protected final float camDistance = (float) ((HEIGHT/2) * Math.sqrt(3));
 
-    public Application() throws Exception {
+    public Application() {
         ecs = new ECS(WIDTH, HEIGHT);
 
-        //add event manager and events
-        //add components
-        //add systems
-        //add renderer
 
         ecs.addEventManager(new EventManager(
                 new Event("example_event1"),
@@ -67,16 +64,18 @@ public class Application {
                 //render,
                 input        = new Input(),
                 polygon      = new Shape(),
-                points       = new Points()
-                //world
+                points       = new Points(),
+                world        = new World()
         );
 
         ecs.addSystem(
-                inputSys     = new InputSys(),
-                controlSys   = new ControlSys(),
-                movementSys  = new MovementSys(),
-                collisionSys = new CollisionSys(),
-                pointSys     = new PointSys()
+                inputSys      = new InputSys(),
+                controlSys    = new ControlSys(),
+                movementSys   = new MovementSys(),
+                proceduralSys = new ProceduralSys(),
+                collisionSys  = new CollisionSys(),
+                pointSys      = new PointSys()
+
         );
 
         //initialize and run
@@ -99,10 +98,29 @@ public class Application {
                     ballSplit.add(2)
             );
         }
+
+        for (int i = 0; i < 8; i ++){
+            ecs.createEntity(
+                    position.add(new float[]{75,-350 + i*100, 0}),
+                    health.add((i+1)*12),
+                    radius.add(eRadius),
+                    ballSplit.add(2)
+            );
+        }
+
+        for (int i = 0; i < 8; i ++){
+            ecs.createEntity(
+                    position.add(new float[]{-75,-350 + i*100, 0}),
+                    health.add((i+1)*12),
+                    radius.add(eRadius),
+                    ballSplit.add(2)
+            );
+        }
     }
 
+    //Main loop
     private void run(){
-        double start,end,delta= 8;
+        double start,end;
 
         while(true){
             start = System.nanoTime();
@@ -124,7 +142,7 @@ public class Application {
         ecs.exit();
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         Application app = new Application();
     }
 }
