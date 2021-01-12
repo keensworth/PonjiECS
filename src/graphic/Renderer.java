@@ -83,15 +83,16 @@ public class Renderer {
         glEnable(GL_DEPTH_TEST);
         
         sceneShaderProgram.bind();
+        sceneShaderProgram.setUniform("cameraPos", new Vector3f(cameraPos));
         sceneShaderProgram.setUniform("projectionMatrix", projectionMatrix);
         sceneShaderProgram.setUniform("viewMatrix", viewMatrix);
-        sceneShaderProgram.setUniform("inColor", new Vector3f(0.776f, 0.501f, 0.141f));
+        sceneShaderProgram.setUniform("inColor", new Vector3f(152f/255, 168f/255, 171f/255));
 
         //Render each mesh at the appropriate location
         int shift = -1;
         for (Mesh mesh : scene) {
             int chunk = (int) (cameraPos[1] / 510);
-            Matrix4f modelMatrix = new Matrix4f().identity().translate(-255, chunk * 255 * 2 + 255 * 2 * shift, -100).scale(2f);
+            Matrix4f modelMatrix = new Matrix4f().identity().translate(-255, chunk * 255 * 2 + 255 * 2 * shift, -50).scale(2f);
             sceneShaderProgram.setUniform("modelMatrix", modelMatrix);
             mesh.render();
             shift++;
@@ -140,7 +141,7 @@ public class Renderer {
         int[] pingpongFBO = new int[]{horizontalFBO,verticalFBO};
         int[] pingpongTex = new int[]{horizontalTex,verticalTex};
         boolean first_iteration = true;
-        int amount = 10;
+        int amount = 20;
         bloomShaderProgram.bind();
         for (int i = 0; i < amount; i++)
         {
@@ -300,6 +301,7 @@ public class Renderer {
         sceneShaderProgram.createFragmentShader(loadResource("resources/scene_fragment.glsl"));
         sceneShaderProgram.link();
 
+        sceneShaderProgram.createUniform("cameraPos");
         sceneShaderProgram.createUniform("projectionMatrix");
         sceneShaderProgram.createUniform("modelMatrix");
         sceneShaderProgram.createUniform("viewMatrix");
