@@ -1,17 +1,24 @@
 package graphic;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.Math;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.util.Scanner;
 
-import ecs.Components.Health;
-import ecs.Components.Position;
-import ecs.Components.Radius;
+import de.javagl.obj.*;
+import ecs.Component;
+import ecs.Components.*;
+import ecs.ECS;
 import ecs.Entity;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import ecs.Systems.RenderSys;
+import javafx.geometry.Pos;
+import org.joml.*;
+import util.ComponentMask;
+import util.Container;
+import util.ETree.EntNode;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
@@ -23,11 +30,21 @@ import static org.lwjgl.opengl.GL32.*;
 
 public class Renderer {
 
+    private int HEIGHT;
+    private int WIDTH;
+
     //Frustrum
-    private static final float FOV = (float) Math.toRadians(60.0f);
-    private static final float Z_NEAR = 0.01f;
-    private static final float Z_FAR = 1000.f;
+    private final float FOV = (float) Math.toRadians(60.0f);
+    private final float Z_NEAR = 1f;
+    private final float Z_FAR = 1500.f;
     private float aspectRatio;
+
+    //Lights
+    private static final int MAX_POINT_LIGHTS = 15;
+    private static final int MAX_SPOT_LIGHTS = 15;
+
+    //Asset manager
+    private AssetManager assetManager;
 
     //GLFW window
     private Window window;
@@ -60,14 +77,18 @@ public class Renderer {
     private float[] cameraRot;
 
 
-    public Renderer(){
+    public Renderer(AssetManager assetManager){
+        this.assetManager = assetManager;
     }
 
     public void init(Window window) {
         this.window = window;
         glClearColor(0.0f,0.0f,0.0f,0.0f);
-        
-        aspectRatio = (float)window.getWidth() / window.getHeight();
+
+        WIDTH = window.getWidth();
+        HEIGHT = window.getHeight();
+
+        aspectRatio = (float) WIDTH / HEIGHT;
         projectionMatrix = new Matrix4f().perspective(FOV, aspectRatio, Z_NEAR, Z_FAR);
 
         setupObjects();
@@ -78,7 +99,7 @@ public class Renderer {
         setupTestShader();
     }
 
-    public void renderScene(Mesh[] scene){
+    public void renderScene(EntNode entities, ComponentMask components){
         glProvokingVertex(GL_LAST_VERTEX_CONVENTION);
         glEnable(GL_DEPTH_TEST);
         
@@ -86,25 +107,59 @@ public class Renderer {
         sceneShaderProgram.setUniform("cameraPos", new Vector3f(cameraPos));
         sceneShaderProgram.setUniform("projectionMatrix", projectionMatrix);
         sceneShaderProgram.setUniform("viewMatrix", viewMatrix);
-        sceneShaderProgram.setUniform("inColor", new Vector3f(152f/255, 168f/255, 171f/255));
+        sceneShaderProgram.setUniform("textured",0);
+        setLightUniforms(entities, components);
 
-        //Render each mesh at the appropriate location
-        int shift = -1;
-        for (Mesh mesh : scene) {
-            int chunk = (int) (cameraPos[1] / 510);
-            Matrix4f modelMatrix = new Matrix4f().identity().translate(-255, chunk * 255 * 2 + 255 * 2 * shift, -50).scale(2f);
-            sceneShaderProgram.setUniform("modelMatrix", modelMatrix);
-            mesh.render();
-            shift++;
+        Input input = (Input) components.getComponent(Input.class);
+        //render light over cursor
+        int[] mousePos = input.getMousePos();
+        sceneShaderProgram.setUniform("mousePos", new Vector3f(mousePos[0]-225+cameraPos[0],mousePos[1]-450+cameraPos[1],300));
+
+        //render chunks
+        Position position = (Position) components.getComponent(Position.class);
+        Rotation rotation = (Rotation) components.getComponent(Rotation.class);
+        Scale scale = (Scale) components.getComponent(Scale.class);
+        ModelData modelData = (ModelData) components.getComponent(ModelData.class);
+        MeshData meshData = (MeshData) components.getComponent(MeshData.class);
+        World world = (World) components.getComponent(World.class);
+
+        Container[] chunks = world.getWorld();
+        for (int i = 0; i < chunks.length; i++){
+            sceneShaderProgram.setUniform("diffuseColor", new Vector3f(0,0,0));
+            sceneShaderProgram.setUniform("specularColor", new Vector3f(0,0,0));
+            Container<Entity> chunk = chunks[i];
+            for (int j = 0; j < chunk.getSize(); j++){
+                sceneShaderProgram.setUniform("inColor", new Vector3f(0, 0, 0));
+                Entity entity = chunk.get(j);
+                int entityID = entity.getEntityId();
+
+                Mesh mesh = null;
+                float itemScale = 1;
+
+                float[] pos = position.getPosition(position.getEntityIndex(entityID));
+                float[] rot = rotation.getRotation(rotation.getEntityIndex(entityID));
+                if (entity.contains(components.getFromClasses(Scale.class))){
+                    itemScale = scale.getScale(scale.getEntityIndex(entityID));
+                }
+
+                int itemID = modelData.getModel(modelData.getEntityIndex(entityID));
+                if (itemID == -1) {
+                    mesh = meshData.getMesh(meshData.getEntityIndex(entityID));
+                }
+
+                renderItem(itemID, pos, rot, itemScale, mesh);
+
+            }
         }
+
         sceneShaderProgram.unbind();
     }
-    
-    public void renderCircles(Entity[] balls, Position position, Health health, Radius radius, int[] posIndices, int[] radiusIndices, int[] healthIndices){
+
+    public void renderCircles(EntNode entities, ComponentMask components){
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_MULTISAMPLE);
         glEnable(GL_BLEND);
-        
+
         // Render to Texture
         glBindFramebuffer(GL_FRAMEBUFFER, circleBuffer);
         clearBuffers(circleBuffer);
@@ -117,10 +172,18 @@ public class Renderer {
         Vector4f bC1 = new Vector4f(0.839f, 0.070f, 0.870f, 1f);
         Vector4f bC2 = new Vector4f(0.956f, 0.501f, 0.082f, 1f);
 
-        for (int i = 0; i < balls.length; i++) {
-            float[] ballPosition = position.getPosition(posIndices[i]);
-            int ballRadius = radius.getRadius(radiusIndices[i]);
-            int ballHealth = health.getHealth(healthIndices[i]);
+        Position position = (Position) components.getComponent(Position.class);
+        Health health = (Health) components.getComponent(Health.class);
+        Radius radius = (Radius) components.getComponent(Radius.class);
+
+        Container<Entity> balls = entities.getEntities(components.getFromClasses(Radius.class));
+
+        for (int i = 0; i < balls.getSize(); i++) {
+            int ball = balls.get(i).getEntityId();
+
+            float[] ballPosition = position.getPosition(position.getEntityIndex(ball));
+            int ballRadius = radius.getRadius(radius.getEntityIndex(ball));
+            int ballHealth = health.getHealth(health.getEntityIndex(ball));
             float adjHealth = (float) Math.pow((float)(100 - ballHealth)/100, 1);
 
             Matrix4f modelMatrix = new Matrix4f().identity().translate(ballPosition[0], ballPosition[1], ballPosition[2]).scale(ballRadius);
@@ -134,8 +197,8 @@ public class Renderer {
         ballShaderProgram.unbind();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glDisable(GL_BLEND);
-        
-        
+
+
         // Blur circleBuffer Texture
         bloomShaderProgram.setUniform("image",0);
         int[] pingpongFBO = new int[]{horizontalFBO,verticalFBO};
@@ -155,7 +218,7 @@ public class Renderer {
         bloomShaderProgram.unbind();
         glBindFramebuffer(GL_FRAMEBUFFER, circleBuffer);
 
-        
+
         //Blend blur and circle textures
         blendShaderProgram.bind();
         glActiveTexture(GL_TEXTURE0);
@@ -167,7 +230,7 @@ public class Renderer {
         quad.render();
         blendShaderProgram.unbind();
 
-        
+
         //Render blended texture
         glEnable(GL_BLEND);
         glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
@@ -185,6 +248,118 @@ public class Renderer {
         glDisable(GL_BLEND);
         clearBuffers(pingpongFBO[0],pingpongFBO[1]);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    private void renderItem(int itemID, float[] position, float[] rotation, float scale, Mesh mesh){
+        if (scale <= 0)
+            scale *= -1;
+
+        //set uniforms
+        Matrix4f modelMatrix = new Matrix4f().identity().translate(new Vector3f(position))
+                .rotate(rotation[2], new Vector3f(0,0,1)).scale(scale);
+        Matrix4f rotationMatrix = new Matrix4f().identity()
+                .rotate(rotation[2], new Vector3f(0,0,1));
+
+        if (mesh != null){
+            sceneShaderProgram.setUniform("modelMatrix", modelMatrix);
+            sceneShaderProgram.setUniform("rotationMatrix", rotationMatrix);
+            sceneShaderProgram.setUniform("inColor", new Vector3f(36f/255, 117f/255, 58f/255));
+            mesh.render();
+        } else {
+            Model model = assetManager.getModel(itemID);
+            AssetGroup assetGroup = assetManager.getAssetGroups().get(model.getGroupID());
+
+            modelMatrix.scale(assetGroup.getScale()).rotate(assetGroup.getRotation(),assetGroup.getAxis());
+            rotationMatrix.rotate(assetGroup.getRotation(), assetGroup.getAxis());
+
+            sceneShaderProgram.setUniform("modelMatrix", modelMatrix);
+            sceneShaderProgram.setUniform("rotationMatrix", rotationMatrix.rotate(rotation[2], new Vector3f(0,0,1)));
+
+            //render the item
+            if (model.getTextureID() < 0) {         //materials
+                renderMaterialItem(model);
+            } else if (model.getTextureID() > 0) { //texture
+                renderTextureItem(model);
+            }
+        }
+    }
+
+    private void renderMaterialItem(Model model){
+        Mesh[] meshes = model.getMeshes();
+        Mtl[] materials = model.getMaterials();
+
+        sceneShaderProgram.setUniform("textured",0);
+
+        for(int i = 0; i < materials.length; i++){
+            Mesh mesh = meshes[i];
+            Mtl material = materials[i];
+            if (material!= null) {
+                FloatTuple diffuse = material.getKd();
+                FloatTuple specular = material.getKs();
+
+                sceneShaderProgram.setUniform("diffuseColor", diffuse);
+                sceneShaderProgram.setUniform("specularColor", specular);
+
+                mesh.render();
+            }
+        }
+    }
+
+    private void renderTextureItem(Model model){
+        glDisable(GL_BLEND);
+        AssetGroup assetGroup = assetManager.getAssetGroups().get(model.getGroupID());
+        Mesh mesh = model.getMesh();
+        int textureID = assetGroup.getTextureID();
+
+        sceneShaderProgram.setUniform("textured",1);
+
+        glEnable(GL_TEXTURE_2D);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        sceneShaderProgram.setUniform("texture", 0);
+
+        mesh.render();
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glEnable(GL_BLEND);
+    }
+
+    private void setLightUniforms(EntNode entities, ComponentMask components){
+        Container<Entity> lights = entities.getEntities(components.getFromClasses(Light.class));
+        Container<Entity> tacos = entities.getEntities(components.getFromClasses(Camera.class));
+        //System.out.println(Integer.toBinaryString(components.getFromClasses(Light.class)));
+        System.out.println(tacos.getSize() + ", " + tacos.getSparseSize() + " (renderer)");
+        java.lang.System.out.println(Integer.toBinaryString(components.getFromClasses(Light.class)));
+        java.lang.System.out.println(Integer.toBinaryString(components.getFromClasses(MeshData.class)));
+        Position position = (Position) components.getComponent(Position.class);
+        Light light = (Light) components.getComponent(Light.class);
+        
+        //set light uniforms
+        int pointLightIndex = 0;
+        int spotLightIndex = 0;
+        for (int i = 0; i < lights.getSize(); i++){
+            int entity = lights.get(i).getEntityId();
+            
+            float[] pos = position.getPosition(position.getEntityIndex(entity));
+            int lightType = light.getLight(light.getEntityIndex(entity));
+
+            if (lightType == 0){
+                sceneShaderProgram.setUniform("pointLights["+pointLightIndex+"]", new Vector3f(pos));
+                pointLightIndex++;
+            } else {
+                sceneShaderProgram.setUniform("spotLights["+spotLightIndex+"]", new Vector3f(pos));
+                spotLightIndex++;
+            }
+        }
+
+        //reset the rest of the light uniforms
+        for (int i = pointLightIndex; i < MAX_POINT_LIGHTS; i++){
+            sceneShaderProgram.setUniform("pointLights["+i+"]", new Vector3f(0,0,0));
+        }
+        for (int i = spotLightIndex; i < MAX_SPOT_LIGHTS; i++){
+            sceneShaderProgram.setUniform("spotLights["+i+"]", new Vector3f(0,0,0));
+        }
+
     }
 
     private void setupObjects(){
@@ -297,21 +472,29 @@ public class Renderer {
     
     private void setupSceneShader(){
         sceneShaderProgram = new ShaderProgram();
-        sceneShaderProgram.createVertexShader(loadResource("resources/scene_vertex.glsl"));
-        sceneShaderProgram.createFragmentShader(loadResource("resources/scene_fragment.glsl"));
+        sceneShaderProgram.createVertexShader(loadResource("resources/shaders/scene_vertex.glsl"));
+        sceneShaderProgram.createFragmentShader(loadResource("resources/shaders/scene_fragment.glsl"));
         sceneShaderProgram.link();
 
         sceneShaderProgram.createUniform("cameraPos");
         sceneShaderProgram.createUniform("projectionMatrix");
         sceneShaderProgram.createUniform("modelMatrix");
+        sceneShaderProgram.createUniform("rotationMatrix");
         sceneShaderProgram.createUniform("viewMatrix");
         sceneShaderProgram.createUniform("inColor");
+        sceneShaderProgram.createUniform("spotLights", MAX_SPOT_LIGHTS);
+        sceneShaderProgram.createUniform("pointLights", MAX_POINT_LIGHTS);
+        sceneShaderProgram.createUniform("mousePos");
+        sceneShaderProgram.createUniform("diffuseColor");
+        sceneShaderProgram.createUniform("specularColor");
+        sceneShaderProgram.createUniform("texture");
+        sceneShaderProgram.createUniform("textured");
     }
 
     private void setupTestShader(){
         textureShaderProgram = new ShaderProgram();
-        textureShaderProgram.createVertexShader(loadResource("resources/texture_vertex.glsl"));
-        textureShaderProgram.createFragmentShader(loadResource("resources/texture_fragment.glsl"));
+        textureShaderProgram.createVertexShader(loadResource("resources/shaders/texture_vertex.glsl"));
+        textureShaderProgram.createFragmentShader(loadResource("resources/shaders/texture_fragment.glsl"));
         textureShaderProgram.link();
 
         textureShaderProgram.createUniform("scene");
@@ -319,8 +502,8 @@ public class Renderer {
 
     private void setupBloomShader() {
         bloomShaderProgram = new ShaderProgram();
-        bloomShaderProgram.createVertexShader(loadResource("resources/bloom_vertex.glsl"));
-        bloomShaderProgram.createFragmentShader(loadResource("resources/bloom_fragment.glsl"));
+        bloomShaderProgram.createVertexShader(loadResource("resources/shaders/bloom_vertex.glsl"));
+        bloomShaderProgram.createFragmentShader(loadResource("resources/shaders/bloom_fragment.glsl"));
         bloomShaderProgram.link();
 
         bloomShaderProgram.createUniform("image");
@@ -329,8 +512,8 @@ public class Renderer {
     
     private void setupBallShader() {
         ballShaderProgram = new ShaderProgram();
-        ballShaderProgram.createVertexShader(loadResource("resources/ball_vertex.glsl"));
-        ballShaderProgram.createFragmentShader(loadResource("resources/ball_fragment.glsl"));
+        ballShaderProgram.createVertexShader(loadResource("resources/shaders/ball_vertex.glsl"));
+        ballShaderProgram.createFragmentShader(loadResource("resources/shaders/ball_fragment.glsl"));
         ballShaderProgram.link();
 
         ballShaderProgram.createUniform("projectionMatrix");
@@ -341,8 +524,8 @@ public class Renderer {
 
     private void setupBlendShader() {
         blendShaderProgram = new ShaderProgram();
-        blendShaderProgram.createVertexShader(loadResource("resources/blend_vertex.glsl"));
-        blendShaderProgram.createFragmentShader(loadResource("resources/blend_fragment.glsl"));
+        blendShaderProgram.createVertexShader(loadResource("resources/shaders/blend_vertex.glsl"));
+        blendShaderProgram.createFragmentShader(loadResource("resources/shaders/blend_fragment.glsl"));
         blendShaderProgram.link();
 
         //createUniforms
