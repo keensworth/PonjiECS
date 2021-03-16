@@ -37,7 +37,7 @@ public class ECS {
      * @param height height of game area
      */
     public ECS(int width, int height){
-        entityTree = new EntNode(3);
+        entityTree = new EntNode(4);
         componentPool = new ComponentMask();
         this.width = width;
         this.height = height;
@@ -121,6 +121,7 @@ public class ECS {
      */
     public Entity createEntity(Component... components) {
         int entityComponents = componentPool.get(components);
+        //java.lang.System.out.println(Integer.toBinaryString(entityComponents));
         java.lang.System.out.println("> > ECS.class - Entity E"+itEntityId+" added");
         Entity entity = new Entity(itEntityId++, entityComponents);
 
