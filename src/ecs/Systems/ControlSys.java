@@ -3,7 +3,9 @@ package ecs.Systems;
 import ecs.Components.*;
 import ecs.Entity;
 import ecs.System;
+import org.joml.Vector3f;
 import util.ComponentMask;
+import util.Container;
 import util.ETree.EntNode;
 
 public class ControlSys extends System {
@@ -12,6 +14,7 @@ public class ControlSys extends System {
     Health health;
     Radius radius;
     Input input;
+    Light light;
 
     public ControlSys() {
         super(Input.class, Velocity.class, Position.class);
@@ -26,13 +29,13 @@ public class ControlSys extends System {
         health = (Health) componentMask.getComponent(Health.class);
         radius = (Radius) componentMask.getComponent(Radius.class);
         input = (Input) componentMask.getComponent(Input.class);
+        light = (Light) componentMask.getComponent(Light.class);
 
-        Entity[] entities = new Entity[]{input.getControllable()};
-
-        int[] velocityIndices = getComponentIndices(Velocity.class, entities, componentMask);
+        Entity[] inputEntity = new Entity[]{input.getControllable()};
+        Entity[] movingEntities = getEntities(entityTree, new Class[]{Velocity.class});
+        int[] velocityIndices = getComponentIndices(Velocity.class, inputEntity, componentMask);
         //java.lang.System.out.println(velocityIndices[0]);
-        
-        if (entities[0]!=null){
+        if (inputEntity[0]!=null){
             if (input.isClicked()){ //launch entity
                 int[] click = input.getMousePos();
                 int i = click[0] - ecs.width/2;
@@ -48,13 +51,14 @@ public class ControlSys extends System {
                 input.reset();
                 return null;
             }
-        } else { //create new entity
+        } else if (movingEntities.length == 0) { //create new entity
             Entity controllable = ecs.createEntity(
                     position.add(new float[]{0, (float)-this.getECS().height/2 + 50, 0}),
                     velocity.add(new float[]{0,0}),
                     health.add(5),
                     radius.add(25),
-                    input.setControllable()
+                    input.setControllable(),
+                    light.add(Light.SPOT_LIGHT)
             );
             input.setControllable(controllable);
         }

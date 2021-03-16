@@ -20,6 +20,7 @@ public class CollisionSys extends System {
     private Health health;
     private NoCollide noCollide;
     private Shape shape;
+    private Light light;
 
     private int[] entityPositionIndices;
     private int[] ballVelocityIndices;
@@ -60,7 +61,6 @@ public class CollisionSys extends System {
 
     private void updateValues(float dt, EntNode entityTree, ComponentMask componentMask, boolean indexChange){
         components = componentMask;
-        java.lang.System.out.println(Integer.toBinaryString(components.getFromClasses(Polygon.class)));
         int worldWidth = this.getECS().width;
         int worldHeight = this.getECS().height;
 
@@ -77,6 +77,7 @@ public class CollisionSys extends System {
         radius = (Radius) componentMask.getComponent(Radius.class);
         noCollide = (NoCollide) componentMask.getComponent(NoCollide.class);
         shape = (Shape) componentMask.getComponent(Shape.class);
+        light = (Light) componentMask.getComponent(Light.class);
     }
 
     private CollisionNode buildCollisionTree(ComponentMask componentMask, int worldWidth, int worldHeight){
@@ -558,7 +559,8 @@ public class CollisionSys extends System {
                     velocity.add(new float[]{newXVel, newYVel}),
                     radius.add(eRadius),
                     health.add(newHealth),
-                    noCollide.add(noCollideInstance)
+                    noCollide.add(noCollideInstance),
+                    light.add(Light.POINT_LIGHT)
             );
         }
     }
@@ -604,7 +606,7 @@ public class CollisionSys extends System {
         float bottomEdge = (float)-worldHeight/2;
 
 
-        if (minY <= bottomEdge || maxY >= topEdge) {
+        if (minY <= bottomEdge) {
             indexVel = velocity.getVelocity(ballVelocityIndices[index]);
             velocity.setVelocity(new float[]{indexVel[0], -indexVel[1]}, ballVelocityIndices[index]);
             if (minY <= bottomEdge) {
