@@ -1,11 +1,14 @@
 package ecs.Systems;
 
+import ecs.Component;
 import ecs.Components.*;
 import ecs.Entity;
 import ecs.System;
+import graphic.AssetManager;
 import graphic.Renderer;
 import graphic.Window;
 import util.ComponentMask;
+import util.Container;
 import util.ETree.EntNode;
 
 public class RenderSys extends System {
@@ -17,19 +20,17 @@ public class RenderSys extends System {
     private Radius radius;
     private World world;
 
-    private int[] ballHealthIndices, ballPositionIndices, ballRadiusIndices;
-
     private Entity[] camera;
     private Entity[] balls;
 
     private Window window;
+    AssetManager assetManager;
     private Renderer renderer;
 
-    public RenderSys(int width, int height){
+    public RenderSys(int width, int height, AssetManager assetManager){
         window = new Window("Ponji", width, height, true);
         window.init();
-
-        renderer = new Renderer();
+        renderer = new Renderer(assetManager);
         renderer.init(window);
     }
 
@@ -43,8 +44,8 @@ public class RenderSys extends System {
         float[] cameraRot = rotation.getRotation(rotation.getEntityIndex(camera[0].getEntityId()));
 
         renderer.prepare(window, cameraPos, cameraRot);
-        renderScene();
-        renderBalls();
+        renderScene(entityTree, componentMask);
+        renderBalls(entityTree, componentMask);
         //renderParticles();
         //renderHUD();
 
@@ -53,12 +54,12 @@ public class RenderSys extends System {
     }
 
 
-    private void renderBalls(){
-            renderer.renderCircles(balls, position, health, radius, ballPositionIndices, ballRadiusIndices, ballHealthIndices);
+    private void renderBalls(EntNode entities, ComponentMask components){
+            renderer.renderCircles(entities, components);
     }
 
-    private void renderScene(){
-        renderer.renderScene(world.getWorld());
+    private void renderScene(EntNode entities, ComponentMask components){
+        renderer.renderScene(entities, components);
     }
 
     private void updateValues(float dt, EntNode entityTree, ComponentMask componentMask, boolean entityChange){
@@ -71,10 +72,6 @@ public class RenderSys extends System {
         rotation = (Rotation) componentMask.getComponent(Rotation.class);
         input = (Input) componentMask.getComponent(Input.class);
         world = (World)componentMask.getComponent(World.class);
-
-        ballHealthIndices = getComponentIndices(Health.class, balls, componentMask);
-        ballPositionIndices = getComponentIndices(Position.class, balls, componentMask);
-        ballRadiusIndices = getComponentIndices(Radius.class, balls, componentMask);
     }
 
     public Window getWindow(){
