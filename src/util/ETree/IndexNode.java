@@ -102,7 +102,15 @@ public class IndexNode extends ENode{
         this.branch[index] = new IndexNode(currOrder-1);
     }
 
-    public IndexNode getBranch(int index) throws NullPointerException { return this.branch[index]; }
+    public IndexNode getBranch(int index) {
+        try {
+            return this.branch[index];
+        } catch (Exception e) {
+            System.out.println("Failed to get branch");
+            return null;
+        }
+    }
+
 
     public IndexNode[] getBranches(){return this.branch; }
 
@@ -152,12 +160,15 @@ public class IndexNode extends ENode{
 
     //BROKEN
     void resizeTree(){
+        System.out.println("Resizing IndexNode");
         if (order>1) {
             IndexNode tempNode = new IndexNode(this.order + 1);
             tempNode.setBranch(0, this);
+            System.out.println(tempNode.getBranch(0));
 
-            this.setOrder(tempNode.getOrder());
             this.setBranches(tempNode.getBranches());
+            this.setOrder(tempNode.getOrder());
+            this.setMask((byte) 0b00000001);
         }
     }
 }
