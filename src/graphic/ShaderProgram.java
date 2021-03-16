@@ -3,6 +3,8 @@ package graphic;
 import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
+
+import de.javagl.obj.FloatTuple;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -37,6 +39,12 @@ public class ShaderProgram {
         uniforms.put(uniformName, uniformLocation);
     }
 
+    public void createUniform(String uniformName, int size) {
+        for (int i = 0; i < size; i++) {
+            createUniform(uniformName + "[" + i + "]");
+        }
+    }
+
     public void setUniform(String uniformName, Matrix4f value) {
         // Dump the matrix into a float buffer
         try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -68,10 +76,33 @@ public class ShaderProgram {
         glUniform3f(uniforms.get(uniformName), value.x, value.y, value.z);
     }
 
+    public void setUniform(String uniformName, FloatTuple value) {
+        glUniform3f(uniforms.get(uniformName), value.getX(), value.getY(), value.getZ());
+    }
+
+    public void setUniform(String uniformName, Vector3f[] values) {
+        for (int i = 0; i < values.length; i++){
+            setUniform(uniformName, values[i], i);
+        }
+    }
+
+    public void setUniform(String uniformName, Vector3f value, int pos) {
+        setUniform(uniformName + "[" + pos + "]", value);
+    }
+
     public void setUniform(String uniformName, Vector4f value) {
         glUniform4f(uniforms.get(uniformName), value.x, value.y, value.z, value.w);
     }
 
+    public void setUniform(String uniformName, Vector4f[] values) {
+        for (int i = 0; i < values.length; i++){
+            setUniform(uniformName, values[i], i);
+        }
+    }
+
+    public void setUniform(String uniformName, Vector4f value, int pos) {
+        setUniform(uniformName + "[" + pos + "]", value);
+    }
 
     public void createVertexShader(String shaderCode) {
         vertexShaderId = createShader(shaderCode, GL_VERTEX_SHADER);
