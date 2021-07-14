@@ -3,8 +3,7 @@ package ecs.Systems;
 import ecs.Entity;
 import ecs.System;
 import ecs.Components.*;
-import util.ComponentMask;
-import util.Container;
+import util.*;
 import util.ETree.EntNode;
 
 public class MovementSys extends System {
@@ -16,7 +15,7 @@ public class MovementSys extends System {
     }
 
     @Override
-    public Class update(float dt, EntNode entityTree, ComponentMask components, boolean entityChange) {
+    public Class update(float dt, EntNode entityTree, ComponentMask components) {
         java.lang.System.out.println("Updating MovementSys");
         Entity[] entities = getEntities(entityTree);
         Entity[] camera = getEntities(entityTree, new Class[]{Camera.class});

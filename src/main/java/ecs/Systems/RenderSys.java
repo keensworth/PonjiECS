@@ -33,17 +33,17 @@ public class RenderSys extends System {
     }
 
     @Override
-    public Class update(float dt, EntNode entityTree, ComponentMask componentMask, boolean entityChange) {
+    public Class update(float dt, EntNode entityTree, ComponentMask components) {
         java.lang.System.out.println("Updating RenderSys");
 
-        updateValues(dt, entityTree, componentMask, entityChange);
+        updateValues(dt, entityTree, components);
 
         float[] cameraPos = position.getPosition(position.getEntityIndex(camera[0].getEntityId()));
         float[] cameraRot = rotation.getRotation(rotation.getEntityIndex(camera[0].getEntityId()));
 
         renderer.prepare(window, cameraPos, cameraRot);
-        renderScene(entityTree, componentMask);
-        renderBalls(entityTree, componentMask);
+        renderScene(entityTree, components);
+        renderBalls(entityTree, components);
         //renderParticles();
         //renderHUD();
 
@@ -60,16 +60,16 @@ public class RenderSys extends System {
         renderer.renderScene(entities, components);
     }
 
-    private void updateValues(float dt, EntNode entityTree, ComponentMask componentMask, boolean entityChange){
+    private void updateValues(float dt, EntNode entityTree, ComponentMask components){
         balls = getEntities(entityTree, new Class[]{Radius.class});
         camera = getEntities(entityTree, new Class[]{Camera.class});
 
-        health = (Health) componentMask.getComponent(Health.class);
-        position = (Position) componentMask.getComponent(Position.class);
-        radius = (Radius) componentMask.getComponent(Radius.class);
-        rotation = (Rotation) componentMask.getComponent(Rotation.class);
-        input = (Input) componentMask.getComponent(Input.class);
-        world = (World)componentMask.getComponent(World.class);
+        health = (Health) components.getComponent(Health.class);
+        position = (Position) components.getComponent(Position.class);
+        radius = (Radius) components.getComponent(Radius.class);
+        rotation = (Rotation) components.getComponent(Rotation.class);
+        input = (Input) components.getComponent(Input.class);
+        world = (World)components.getComponent(World.class);
     }
 
     public Window getWindow(){

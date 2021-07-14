@@ -14,7 +14,7 @@ public abstract class System {
     }
 
 
-    public abstract Class update(float dt, EntNode entityTree, ComponentMask componentMask, boolean entityChange);
+    public abstract Class update(float dt, EntNode entityTree, ComponentMask componentMask);
     public abstract void exit();
 
     /**

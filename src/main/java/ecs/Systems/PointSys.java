@@ -16,7 +16,7 @@ public class PointSys extends System{
     }
 
     @Override
-    public Class update(float dt, EntNode entityTree, ComponentMask components, boolean entityChange) {
+    public Class update(float dt, EntNode entityTree, ComponentMask components) {
         java.lang.System.out.println("Updating PointSys");
 
         Entity[] entitiesKilled = ecs.entityRemove.toArray(new Entity[0]);

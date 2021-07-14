@@ -14,7 +14,6 @@ public class ECS {
     private EntNode entityTree;
 
     private int itEntityId = 1;
-    private boolean entityChange;
 
     private List<System> systems = new LinkedList<>();
     private System renderer;
@@ -52,7 +51,6 @@ public class ECS {
     public void update(final float delta) {
         //adds/removes entities to entityTree
         if (!entityAdd.isEmpty() || !entityRemove.isEmpty()) {
-            entityChange = true;
             for (Entity entity : entityAdd) {
                 entityTree.addEntity(entity);
             }
@@ -62,15 +60,14 @@ public class ECS {
 
         entityAdd.clear();
         entityRemove.clear();
-        entityChange = false;
 
         //updates all systems
         for (System system : systems) {
             if (requireSystem == null || system.getClass() == requireSystem) {
-                requireSystem = system.update(delta, entityTree, componentPool, entityChange);
+                requireSystem = system.update(delta, entityTree, componentPool);
             }
         }
-        renderer.update(delta, entityTree, componentPool, entityChange);
+        renderer.update(delta, entityTree, componentPool);
         eventManager.update();
     }
 

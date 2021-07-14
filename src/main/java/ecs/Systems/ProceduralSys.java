@@ -62,7 +62,7 @@ public class ProceduralSys extends System {
     }
 
     @Override
-    public Class update(float dt, EntNode entityTree, ComponentMask components, boolean entityChange) {
+    public Class update(float dt, EntNode entityTree, ComponentMask components) {
         java.lang.System.out.println("Updating ProceduralSys");
         updateValues(entityTree, components);
 
