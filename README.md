@@ -113,7 +113,8 @@ public class ExampleSys extends System {
         super();
     }
     
-    // this is function is called from within the ECS every frame
+    // this method is called from within the ECS every frame
+    // this is where the system does its work
     @Override
     public Class update(float dt, EntNode entityTree, ComponentMask components) {
             return null;
@@ -141,7 +142,6 @@ public class ExampleSys extends System {
         super();
     }
     
-    // this is function is called from within the ECS every frame
     @Override
     public Class update(float dt, EntNode entityTree, ComponentMask components) {
         // retrieve component class instances (stored in the ECS)
