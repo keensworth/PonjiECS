@@ -221,7 +221,7 @@ public class ExampleSys extends System {
         // retrieve component class instance (stored in the ECS)
         position = components.getComponent(Position.class)
         
-        // retrieve entities that contain Component2
+        // retrieve entities that contain the Position component
         Entity[] entities = getEntities(entityTree, new Class[]{Position.class});
         
         // arbitrarily pick the first entity
