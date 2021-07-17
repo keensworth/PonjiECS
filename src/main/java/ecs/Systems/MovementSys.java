@@ -3,6 +3,7 @@ package ecs.Systems;
 import ecs.Entity;
 import ecs.System;
 import ecs.Components.*;
+import org.joml.Vector3f;
 import util.*;
 import util.ETree.EntNode;
 
@@ -20,40 +21,29 @@ public class MovementSys extends System {
         Entity[] entities = getEntities(entityTree);
         Entity[] camera = getEntities(entityTree, new Class[]{Camera.class});
 
-        int[] positionIndices = getComponentIndices(Position.class, entities, components);
-        int[] velocityIndices = getComponentIndices(Velocity.class, entities, components);
-
         position = (Position) components.getComponent(Position.class);
         velocity = (Velocity) components.getComponent(Velocity.class);
 
         float highestBallYPos = 0;
 
-        if (velocityIndices.length==0){
-            //return ControlSys.class;
+        if (entities.length==0){
             return null;
         }
         else { //update positions of entities
-            for (int index = 0; index < entities.length; index++) {
-                int positionIndex = positionIndices[index];
-                int velocityIndex = velocityIndices[index];
+            for (Entity entity : entities) {
+                Vector3f velocityVec = velocity.get(entity);
+                Vector3f positionVec = position.get(entity);
 
-                float[] velocityVec = velocity.getVelocity(velocityIndex);
-                float[] positionVec = position.getPosition(positionIndex);
+                positionVec = new Vector3f(positionVec.x + velocityVec.x*dt, positionVec.y + velocityVec.y*dt,positionVec.z + velocityVec.z*dt);
 
-                float xVelocity = velocityVec[0];
-                float yVelocity = velocityVec[1];
+                if (positionVec.y > highestBallYPos && positionVec.y > 0)
+                    highestBallYPos = positionVec.y;
 
-                float xPosition = positionVec[0] + xVelocity*dt;
-                float yPosition = positionVec[1] + yVelocity*dt;
-
-                if (yPosition > highestBallYPos && yPosition > 0)
-                    highestBallYPos = yPosition;
-
-                position.setXPos(positionIndex, xPosition);
-                position.setYPos(positionIndex, yPosition);
+                position.set(entity, positionVec);
             }
 
-            position.setYPos(position.getEntityIndex(camera[0].getEntityId()),highestBallYPos);
+            Vector3f camPos = position.get(camera[0]);
+            position.set(camera[0], new Vector3f(camPos.x, highestBallYPos, camPos.z));
 
             return null;
         }

@@ -6,6 +6,7 @@ import ecs.System;
 import static org.lwjgl.glfw.GLFW.*;
 
 import graphic.Window;
+import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
@@ -57,24 +58,19 @@ public class InputSys extends System {
             holding = false;
         }
         if (holding){
+            Vector3f camPos = position.get(camera);
             if (holdKey == GLFW_KEY_LEFT_SHIFT){
-                float[] camPos = position.getPosition(position.getEntityIndex(camera.getEntityId()));
-                position.setZYPos(position.getEntityIndex(camera.getEntityId()), camPos[2]-2);
+                position.set(camera, new Vector3f(camPos.x, camPos.y, camPos.z-2));
             } else if (holdKey == GLFW_KEY_SPACE){
-                float[] camPos = position.getPosition(position.getEntityIndex(camera.getEntityId()));
-                position.setZYPos(position.getEntityIndex(camera.getEntityId()), camPos[2]+2);
+                position.set(camera, new Vector3f(camPos.x, camPos.y, camPos.z+2));
             } else if (holdKey == GLFW_KEY_A){
-                float[] camPos = position.getPosition(position.getEntityIndex(camera.getEntityId()));
-                position.setXPos(position.getEntityIndex(camera.getEntityId()), camPos[0]-2);
+                position.set(camera, new Vector3f(camPos.x-2, camPos.y, camPos.z));
             } else if (holdKey == GLFW_KEY_D){
-                float[] camPos = position.getPosition(position.getEntityIndex(camera.getEntityId()));
-                position.setXPos(position.getEntityIndex(camera.getEntityId()), camPos[0]+2);
+                position.set(camera, new Vector3f(camPos.x+2, camPos.y, camPos.z));
             } else if (holdKey == GLFW_KEY_W){
-                float[] camPos = position.getPosition(position.getEntityIndex(camera.getEntityId()));
-                position.setYPos(position.getEntityIndex(camera.getEntityId()), camPos[1]+2);
+                position.set(camera, new Vector3f(camPos.x, camPos.y+2, camPos.z));
             } else if (holdKey == GLFW_KEY_S){
-                float[] camPos = position.getPosition(position.getEntityIndex(camera.getEntityId()));
-                position.setYPos(position.getEntityIndex(camera.getEntityId()), camPos[1]-2);
+                position.set(camera, new Vector3f(camPos.x, camPos.y-2, camPos.z));
             }
         }
         if (button == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {  //escape, close window
@@ -82,24 +78,19 @@ public class InputSys extends System {
         } else if (action == GLFW_PRESS){
             holding = true;
             holdKey = button;
+            Vector3f camPos = position.get(camera);
             if (button == GLFW_KEY_LEFT_SHIFT){
-                float[] camPos = position.getPosition(position.getEntityIndex(camera.getEntityId()));
-                position.setZYPos(position.getEntityIndex(camera.getEntityId()), camPos[2]-4);
+                position.set(camera, new Vector3f(camPos.x, camPos.y, camPos.z-4));
             } else if (button == GLFW_KEY_SPACE){
-                float[] camPos = position.getPosition(position.getEntityIndex(camera.getEntityId()));
-                position.setZYPos(position.getEntityIndex(camera.getEntityId()), camPos[2]+4);
+                position.set(camera, new Vector3f(camPos.x, camPos.y, camPos.z+4));
             } else if (button == GLFW_KEY_A){
-                float[] camPos = position.getPosition(position.getEntityIndex(camera.getEntityId()));
-                position.setXPos(position.getEntityIndex(camera.getEntityId()), camPos[0]-4);
+                position.set(camera, new Vector3f(camPos.x-4, camPos.y, camPos.z));
             } else if (button == GLFW_KEY_D){
-                float[] camPos = position.getPosition(position.getEntityIndex(camera.getEntityId()));
-                position.setXPos(position.getEntityIndex(camera.getEntityId()), camPos[0]+4);
+                position.set(camera, new Vector3f(camPos.x+4, camPos.y, camPos.z));
             } else if (button == GLFW_KEY_W){
-                float[] camPos = position.getPosition(position.getEntityIndex(camera.getEntityId()));
-                position.setYPos(position.getEntityIndex(camera.getEntityId()), camPos[1]+4);
+                position.set(camera, new Vector3f(camPos.x, camPos.y+4, camPos.z));
             } else if (button == GLFW_KEY_S){
-                float[] camPos = position.getPosition(position.getEntityIndex(camera.getEntityId()));
-                position.setYPos(position.getEntityIndex(camera.getEntityId()), camPos[1]-4);
+                position.set(camera, new Vector3f(camPos.x, camPos.y-4, camPos.z));
             }
         }
     }

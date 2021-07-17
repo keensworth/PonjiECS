@@ -36,7 +36,6 @@ public class Application {
     private ControlSys controlSys;                    //check for input (click, vector) and launch launcher
     private CollisionSys collisionSys;                //build collision tree
     private ProceduralSys proceduralSys;              //procedurally generate terrain depending on player location
-    private PointSys pointSys;
     private MovementSys movementSys;                  //update positions of moving entities
     private RenderSys renderSys;                      //color each object based on health, render to screen (paint screen)
 
@@ -84,8 +83,7 @@ public class Application {
                 controlSys    = new ControlSys(),
                 movementSys   = new MovementSys(),
                 proceduralSys = new ProceduralSys(),
-                collisionSys  = new CollisionSys(),
-                pointSys      = new PointSys()
+                collisionSys  = new CollisionSys()
         );
 
         //initialize and run
@@ -95,7 +93,7 @@ public class Application {
     }
 
     private void importAssets(){
-        assets.importAssets("C:\\Users\\Sargy\\IdeaProjects\\PonjiECS\\src\\graphic\\resources\\models");
+        assets.importAssets("src/main/resources/models");
         Container<AssetGroup> assetGroups = assets.getAssetGroups();
         AssetGroup city = assetGroups.get(0);
         AssetGroup western = assetGroups.get(3);
@@ -110,8 +108,8 @@ public class Application {
 
     private void initScene(int eRadius){
         ecs.createEntity(
-                position.add(new float[]{0,0,camDistance}),
-                rotation.add(new float[]{-PI/8,0,0}),
+                position.add(new Vector3f(0,0,camDistance)),
+                rotation.add(new Vector3f(-PI/8,0,0)),
                 camera.add()
         );
 
@@ -131,17 +129,14 @@ public class Application {
     //Main loop
     private void run(){
         double start,end;
-
+        double dt = 1/60D;
         while(true){
             start = System.nanoTime();
-
-            update((float)1/60);
+            update((float)dt);
             System.out.println("UPDATED");
-
             end = System.nanoTime();
-            while (end-start < 16000000){
-                end = System.nanoTime();
-            }
+
+            dt = (end-start)/1000000000D;
         }
     }
 

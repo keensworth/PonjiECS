@@ -4,6 +4,7 @@ import ecs.Entity;
 import ecs.System;
 import ecs.Components.*;
 import graphic.Mesh;
+import org.joml.Vector3f;
 import org.joml.sampling.Callback2d;
 import org.joml.sampling.PoissonSampling;
 import util.*;
@@ -76,8 +77,8 @@ public class ProceduralSys extends System {
         }
 
 
-        float[] cameraPos = position.getPosition(position.getEntityIndex(camera.getEntityId()));
-        float cameraYPos = cameraPos[1];
+        Vector3f cameraPos = position.get(camera);
+        float cameraYPos = cameraPos.y;
         updateWorld(cameraYPos);
 
         return null;
@@ -134,8 +135,8 @@ public class ProceduralSys extends System {
         //add world floor
         Mesh worldMesh = generateWorldMesh(heightMap, 0);
         Entity entity = ecs.createEntity(
-                position.add(new float[]{X_SHIFT, chunk*CHUNK_SIZE, Z_SHIFT}),
-                rotation.add(new float[]{0,0,0}),
+                position.add(new Vector3f(X_SHIFT, chunk*CHUNK_SIZE, Z_SHIFT)),
+                rotation.add(new Vector3f(0,0,0)),
                 scale.add((float)CHUNK_SIZE/31),
                 modelData.add(-1),
                 meshData.add(worldMesh)
@@ -178,8 +179,8 @@ public class ProceduralSys extends System {
                     int modelIndex = (int)(Math.random()*NATURE_GROUPS[0].length);
                     int modelID = NATURE_GROUPS[modelGroup][modelIndex];
                     Entity entity = ecs.createEntity(
-                            position.add(new float[]{v*adjust, chunk*CHUNK_SIZE + v1*adjust + 256, Z_SHIFT}),
-                            rotation.add(new float[]{0, 0, v1%3.141f}),
+                            position.add(new Vector3f(v*adjust, chunk*CHUNK_SIZE + v1*adjust + 256, Z_SHIFT)),
+                            rotation.add(new Vector3f(0,0,v1%3.141f)),
                             scale.add(0.75f),
                             modelData.add(modelID)
                     );
@@ -208,8 +209,8 @@ public class ProceduralSys extends System {
                         int modelIndex = (int)(Math.random()*NATURE_GROUPS[modelGroup].length);
                         int modelID = NATURE_GROUPS[modelGroup][modelIndex];
                         Entity entity = ecs.createEntity(
-                                position.add(new float[]{X_SHIFT + x*adjust, chunk*CHUNK_SIZE + y*adjust, Z_SHIFT}),
-                                rotation.add(new float[]{0, 0, y%3.141f}),
+                                position.add(new Vector3f(X_SHIFT + x*adjust, chunk*CHUNK_SIZE + y*adjust, Z_SHIFT)),
+                                rotation.add(new Vector3f(0, 0, y%3.141f)),
                                 scale.add(1f),
                                 modelData.add(modelID)
                         );
@@ -235,8 +236,8 @@ public class ProceduralSys extends System {
                         int modelIndex = (int)(Math.random()*NATURE_GROUPS[modelGroup].length);
                         int modelID = NATURE_GROUPS[modelGroup][modelIndex];
                         Entity entity = ecs.createEntity(
-                                position.add(new float[]{X_SHIFT + x*adjust, chunk*CHUNK_SIZE + y*adjust, Z_SHIFT}),
-                                rotation.add(new float[]{0, 0, y%3.141f}),
+                                position.add(new Vector3f(X_SHIFT + x*adjust, chunk*CHUNK_SIZE + y*adjust, Z_SHIFT)),
+                                rotation.add(new Vector3f(0,0, y%3.141f)),
                                 scale.add(0.7f),
                                 modelData.add(modelID)
                         );

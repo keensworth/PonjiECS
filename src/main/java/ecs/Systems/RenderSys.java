@@ -6,6 +6,7 @@ import ecs.System;
 import graphic.AssetManager;
 import graphic.Renderer;
 import graphic.Window;
+import org.joml.Vector3f;
 import util.ComponentMask;
 import util.ETree.EntNode;
 
@@ -38,14 +39,12 @@ public class RenderSys extends System {
 
         updateValues(dt, entityTree, components);
 
-        float[] cameraPos = position.getPosition(position.getEntityIndex(camera[0].getEntityId()));
-        float[] cameraRot = rotation.getRotation(rotation.getEntityIndex(camera[0].getEntityId()));
+        Vector3f cameraPos = position.get(camera[0]);
+        Vector3f cameraRot = rotation.get(camera[0]);
 
         renderer.prepare(window, cameraPos, cameraRot);
         renderScene(entityTree, components);
         renderBalls(entityTree, components);
-        //renderParticles();
-        //renderHUD();
 
         window.update();
         return null;

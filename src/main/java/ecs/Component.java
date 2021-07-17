@@ -1,5 +1,6 @@
 package ecs;
 
+import util.Container;
 import util.ETree.IndexNode;
 
 import java.lang.reflect.Field;
@@ -7,10 +8,26 @@ import java.lang.reflect.Field;
 public class Component {
     private IndexNode indexTree;
     private int lastWriteIndex;
-
+    private Container data;
 
     public Component(){
         indexTree = new IndexNode(3);
+    }
+
+    public<T> void setContainer(Container<T> container){
+        this.data = container;
+    }
+
+    public<T> T get(Entity entity){
+        return (T) data.get(getEntityIndex(entity.getEntityId()));
+    }
+
+    public<T> void set(Entity entity, T data){
+        this.data.set(getEntityIndex(entity.getEntityId()), data);
+    }
+
+    public<T> void add(T data){
+        setLastWriteIndex(this.data.add(data));
     }
 
     /**
@@ -69,11 +86,9 @@ public class Component {
         return desc.toString();
     }
 
-
     public String getName(){
         return this.getClass().getSimpleName();
     }
-
 
     @Override
     public boolean equals(Object obj) {

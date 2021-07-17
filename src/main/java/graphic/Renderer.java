@@ -1,5 +1,6 @@
 package graphic;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.Math;
@@ -8,6 +9,7 @@ import java.util.Scanner;
 
 import de.javagl.obj.*;
 import ecs.Components.*;
+import ecs.ECS;
 import ecs.Entity;
 import org.joml.*;
 import util.ComponentMask;
@@ -26,6 +28,8 @@ public class Renderer {
 
     private int HEIGHT;
     private int WIDTH;
+    
+    private String shaderPath = "src/main/resources/shaders/";
 
     //Frustrum
     private final float FOV = (float) Math.toRadians(60.0f);
@@ -67,8 +71,8 @@ public class Renderer {
     private Mesh circle;
 
     //Camera
-    private float[] cameraPos;
-    private float[] cameraRot;
+    private Vector3f cameraPos;
+    private Vector3f cameraRot;
 
 
     public Renderer(AssetManager assetManager){
@@ -107,7 +111,7 @@ public class Renderer {
         Input input = (Input) components.getComponent(Input.class);
         //render light over cursor
         int[] mousePos = input.getMousePos();
-        sceneShaderProgram.setUniform("mousePos", new Vector3f(mousePos[0]-225+cameraPos[0],mousePos[1]-450+cameraPos[1],300));
+        sceneShaderProgram.setUniform("mousePos", new Vector3f(mousePos[0]-225+cameraPos.x,mousePos[1]-450+cameraPos.y,300));
 
         //render chunks
         Position position = (Position) components.getComponent(Position.class);
@@ -125,20 +129,19 @@ public class Renderer {
             for (int j = 0; j < chunk.getSize(); j++){
                 sceneShaderProgram.setUniform("inColor", new Vector3f(0, 0, 0));
                 Entity entity = chunk.get(j);
-                int entityID = entity.getEntityId();
 
                 Mesh mesh = null;
                 float itemScale = 1;
 
-                float[] pos = position.getPosition(position.getEntityIndex(entityID));
-                float[] rot = rotation.getRotation(rotation.getEntityIndex(entityID));
+                Vector3f pos = position.get(entity);
+                Vector3f rot = rotation.get(entity);
                 if (entity.contains(components.getFromClasses(Scale.class))){
-                    itemScale = scale.getScale(scale.getEntityIndex(entityID));
+                    itemScale = scale.get(entity);
                 }
 
-                int itemID = modelData.getModel(modelData.getEntityIndex(entityID));
+                int itemID = modelData.get(entity);
                 if (itemID == -1) {
-                    mesh = meshData.getMesh(meshData.getEntityIndex(entityID));
+                    mesh = meshData.get(entity);
                 }
 
                 renderItem(itemID, pos, rot, itemScale, mesh);
@@ -173,14 +176,14 @@ public class Renderer {
         Container<Entity> balls = entities.getEntities(components.getFromClasses(Radius.class));
 
         for (int i = 0; i < balls.getSize(); i++) {
-            int ball = balls.get(i).getEntityId();
+            Entity ball = balls.get(i);
 
-            float[] ballPosition = position.getPosition(position.getEntityIndex(ball));
-            int ballRadius = radius.getRadius(radius.getEntityIndex(ball));
-            int ballHealth = health.getHealth(health.getEntityIndex(ball));
+            Vector3f ballPosition = position.get(ball);
+            int ballRadius = radius.get(ball);
+            int ballHealth = health.get(ball);
             float adjHealth = (float) Math.pow((float)(100 - ballHealth)/100, 1);
 
-            Matrix4f modelMatrix = new Matrix4f().identity().translate(ballPosition[0], ballPosition[1], ballPosition[2]).scale(ballRadius);
+            Matrix4f modelMatrix = new Matrix4f().identity().translate(ballPosition.x, ballPosition.y, ballPosition.z).scale(ballRadius);
             Vector4f color = new Vector4f(bC1.x + adjHealth * (bC2.x-bC1.x), bC1.y + adjHealth * (bC2.y-bC1.y), bC1.z + adjHealth * (bC2.z-bC1.z),1f);
 
             ballShaderProgram.setUniform("modelMatrix", modelMatrix);
@@ -244,15 +247,15 @@ public class Renderer {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    private void renderItem(int itemID, float[] position, float[] rotation, float scale, Mesh mesh){
+    private void renderItem(int itemID, Vector3f position, Vector3f rotation, float scale, Mesh mesh){
         if (scale <= 0)
             scale *= -1;
 
         //set uniforms
         Matrix4f modelMatrix = new Matrix4f().identity().translate(new Vector3f(position))
-                .rotate(rotation[2], new Vector3f(0,0,1)).scale(scale);
+                .rotate(rotation.z, new Vector3f(0,0,1)).scale(scale);
         Matrix4f rotationMatrix = new Matrix4f().identity()
-                .rotate(rotation[2], new Vector3f(0,0,1));
+                .rotate(rotation.z, new Vector3f(0,0,1));
 
         if (mesh != null){
             sceneShaderProgram.setUniform("modelMatrix", modelMatrix);
@@ -267,7 +270,7 @@ public class Renderer {
             rotationMatrix.rotate(assetGroup.getRotation(), assetGroup.getAxis());
 
             sceneShaderProgram.setUniform("modelMatrix", modelMatrix);
-            sceneShaderProgram.setUniform("rotationMatrix", rotationMatrix.rotate(rotation[2], new Vector3f(0,0,1)));
+            sceneShaderProgram.setUniform("rotationMatrix", rotationMatrix.rotate(rotation.z, new Vector3f(0,0,1)));
 
             //render the item
             if (model.getTextureID() < 0) {         //materials
@@ -332,10 +335,10 @@ public class Renderer {
         int pointLightIndex = 0;
         int spotLightIndex = 0;
         for (int i = 0; i < lights.getSize(); i++){
-            int entity = lights.get(i).getEntityId();
+            Entity entity = lights.get(i);
             
-            float[] pos = position.getPosition(position.getEntityIndex(entity));
-            int lightType = light.getLight(light.getEntityIndex(entity));
+            Vector3f pos = position.get(entity);
+            int lightType = light.get(entity);
 
             if (lightType == 0){
                 sceneShaderProgram.setUniform("pointLights["+pointLightIndex+"]", new Vector3f(pos));
@@ -460,14 +463,14 @@ public class Renderer {
                 }
         );
         
-        cameraPos = new float[3];
-        cameraRot = new float[3];
+        cameraPos = new Vector3f();
+        cameraRot = new Vector3f();
     }
     
     private void setupSceneShader(){
         sceneShaderProgram = new ShaderProgram();
-        sceneShaderProgram.createVertexShader(loadResource("resources/shaders/scene_vertex.glsl"));
-        sceneShaderProgram.createFragmentShader(loadResource("resources/shaders/scene_fragment.glsl"));
+        sceneShaderProgram.createVertexShader(loadResource(shaderPath + "scene_vertex.glsl"));
+        sceneShaderProgram.createFragmentShader(loadResource(shaderPath + "scene_fragment.glsl"));
         sceneShaderProgram.link();
 
         sceneShaderProgram.createUniform("cameraPos");
@@ -487,8 +490,8 @@ public class Renderer {
 
     private void setupTestShader(){
         textureShaderProgram = new ShaderProgram();
-        textureShaderProgram.createVertexShader(loadResource("resources/shaders/texture_vertex.glsl"));
-        textureShaderProgram.createFragmentShader(loadResource("resources/shaders/texture_fragment.glsl"));
+        textureShaderProgram.createVertexShader(loadResource(shaderPath + "texture_vertex.glsl"));
+        textureShaderProgram.createFragmentShader(loadResource(shaderPath + "texture_fragment.glsl"));
         textureShaderProgram.link();
 
         textureShaderProgram.createUniform("scene");
@@ -496,8 +499,8 @@ public class Renderer {
 
     private void setupBloomShader() {
         bloomShaderProgram = new ShaderProgram();
-        bloomShaderProgram.createVertexShader(loadResource("resources/shaders/bloom_vertex.glsl"));
-        bloomShaderProgram.createFragmentShader(loadResource("resources/shaders/bloom_fragment.glsl"));
+        bloomShaderProgram.createVertexShader(loadResource(shaderPath + "bloom_vertex.glsl"));
+        bloomShaderProgram.createFragmentShader(loadResource(shaderPath + "bloom_fragment.glsl"));
         bloomShaderProgram.link();
 
         bloomShaderProgram.createUniform("image");
@@ -506,8 +509,8 @@ public class Renderer {
     
     private void setupBallShader() {
         ballShaderProgram = new ShaderProgram();
-        ballShaderProgram.createVertexShader(loadResource("resources/shaders/ball_vertex.glsl"));
-        ballShaderProgram.createFragmentShader(loadResource("resources/shaders/ball_fragment.glsl"));
+        ballShaderProgram.createVertexShader(loadResource(shaderPath + "ball_vertex.glsl"));
+        ballShaderProgram.createFragmentShader(loadResource(shaderPath + "ball_fragment.glsl"));
         ballShaderProgram.link();
 
         ballShaderProgram.createUniform("projectionMatrix");
@@ -518,8 +521,8 @@ public class Renderer {
 
     private void setupBlendShader() {
         blendShaderProgram = new ShaderProgram();
-        blendShaderProgram.createVertexShader(loadResource("resources/shaders/blend_vertex.glsl"));
-        blendShaderProgram.createFragmentShader(loadResource("resources/shaders/blend_fragment.glsl"));
+        blendShaderProgram.createVertexShader(loadResource(shaderPath + "blend_vertex.glsl"));
+        blendShaderProgram.createFragmentShader(loadResource(shaderPath + "blend_fragment.glsl"));
         blendShaderProgram.link();
 
         //createUniforms
@@ -528,15 +531,15 @@ public class Renderer {
         //blendShaderProgram.createUniform("exposure");
     }
 
-    private void updateViewMatrix(float[] cameraPos, float[] cameraRot){
+    private void updateViewMatrix(Vector3f cameraPos, Vector3f cameraRot){
         viewMatrix = new Matrix4f().identity();
-        viewMatrix.rotate(cameraRot[0], new Vector3f(1, 0, 0))
-                  .rotate(cameraRot[1], new Vector3f(0, 1, 0))
-                  .rotate(cameraRot[2], new Vector3f(0, 0, 1));
-        viewMatrix.translate(-cameraPos[0], -cameraPos[1], -cameraPos[2]);
+        viewMatrix.rotate(cameraRot.x, new Vector3f(1, 0, 0))
+                  .rotate(cameraRot.y, new Vector3f(0, 1, 0))
+                  .rotate(cameraRot.z, new Vector3f(0, 0, 1));
+        viewMatrix.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
     }
 
-    public void prepare(Window window, float[] cameraPos, float[] cameraRot) {
+    public void prepare(Window window, Vector3f cameraPos, Vector3f cameraRot) {
         this.cameraPos = cameraPos;
         this.cameraRot = cameraRot;
 
@@ -560,11 +563,11 @@ public class Renderer {
 
     public static String loadResource(String fileName) {
         String result = "";
-        try (InputStream in = Renderer.class.getResourceAsStream(fileName);
-             Scanner scanner = new Scanner(in, java.nio.charset.StandardCharsets.UTF_8.name())) {
+        File in = new File(fileName);
+        try (Scanner scanner = new Scanner(in, java.nio.charset.StandardCharsets.UTF_8.name())) {
             result = scanner.useDelimiter("\\A").next();
-        } catch (IOException e){
-            System.out.println("Could not load resource: " + fileName);
+        } catch (Exception e){
+            System.out.println("Failed to load resource: " + fileName);
         }
         return result;
     }
