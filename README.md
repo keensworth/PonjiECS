@@ -81,22 +81,13 @@ public class Radius extends Component {
         radius = new Container();
     }
 
-    public int getRadius(int index){
-        return (int)radius.get(index);
-    }
-
-    public void setRadius(int index, int radius){
-        radius.set(index, radius);
-    }
-
     public Radius add(int radius){
         super.setLastWriteIndex(this.radius.add(radius));
         return this;
     }
 }
 ```
-Every component class must contain an `add` method, constructed similarly to the above (the only difference is the type of data being added). The get and set methods can be
-constructed as desired. The `add` method communicates with the ECS to ensure that the component data is stored properly.
+Every component class must contain an `add` method, constructed similarly to the above (the only difference is the type of data being added). The `add` method communicates with the ECS to ensure that the component data is stored properly.
 
 ### System Implementation
 The context for most logic will be inside of a class that extends the `System` class. Most entity/component interactions will take place inside of system classes. At the bare
@@ -228,10 +219,10 @@ public class ExampleSys extends System {
         Entity entity = entities[0];
         
         // get position
-        Vector3f entityPos = position.getPosition(entity)
+        Vector3f entityPos = position.get(entity)
         
         // set position
-        position.setPosition(new Vector3f(0,0,5), entity)
+        position.set(new Vector3f(0,0,5), entity)
         
         return null;
     }
