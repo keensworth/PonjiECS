@@ -31,6 +31,15 @@ public class IndexNode extends ENode{
         }
     }
 
+    public IndexNode(IndexNode node){
+        this.setOrder(node.getOrder());
+        this.setBranches(node.getBranches());
+        this.setMask(node.getMask());
+        if (node.getOrder() == 0){
+            this.leaf = node.leaf;
+        }
+    }
+
     /**
      * Add an integer value to the tree at index.
      * Used to store the indices of entities' component data
@@ -40,7 +49,7 @@ public class IndexNode extends ENode{
      */
     public void addItem(int index, int value){
         index--;
-        while (Math.pow(8,this.order+1) < index){
+        while (Math.pow(8,this.order+1) < index+1){
             resizeTree();
         }
 
@@ -163,7 +172,7 @@ public class IndexNode extends ENode{
         System.out.println("Resizing IndexNode");
         if (order>1) {
             IndexNode tempNode = new IndexNode(this.order + 1);
-            tempNode.setBranch(0, this);
+            tempNode.setBranch(0, new IndexNode(this));
             System.out.println(tempNode.getBranch(0));
 
             this.setBranches(tempNode.getBranches());
