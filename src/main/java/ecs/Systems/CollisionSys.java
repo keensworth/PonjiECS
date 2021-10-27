@@ -56,7 +56,7 @@ public class CollisionSys extends System {
     }
 
     private void updateValues(float dt, EntNode entityTree, ComponentMask components){
-        components = components;
+        this.components = components;
         int worldWidth = this.getECS().width;
         int worldHeight = this.getECS().height;
 
