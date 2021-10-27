@@ -257,6 +257,7 @@ public class Renderer {
         Matrix4f rotationMatrix = new Matrix4f().identity()
                 .rotate(rotation.z, new Vector3f(0,0,1));
 
+
         if (mesh != null){
             sceneShaderProgram.setUniform("modelMatrix", modelMatrix);
             sceneShaderProgram.setUniform("rotationMatrix", rotationMatrix);
@@ -270,7 +271,7 @@ public class Renderer {
             rotationMatrix.rotate(assetGroup.getRotation(), assetGroup.getAxis());
 
             sceneShaderProgram.setUniform("modelMatrix", modelMatrix);
-            sceneShaderProgram.setUniform("rotationMatrix", rotationMatrix.rotate(rotation.z, new Vector3f(0,0,1)));
+            sceneShaderProgram.setUniform("rotationMatrix", rotationMatrix);
 
             //render the item
             if (model.getTextureID() < 0) {         //materials
@@ -323,11 +324,6 @@ public class Renderer {
 
     private void setLightUniforms(EntNode entities, ComponentMask components){
         Container<Entity> lights = entities.getEntities(components.getFromClasses(Light.class));
-        Container<Entity> tacos = entities.getEntities(components.getFromClasses(Camera.class));
-        //System.out.println(Integer.toBinaryString(components.getFromClasses(Light.class)));
-        System.out.println(tacos.getSize() + ", " + tacos.getSparseSize() + " (renderer)");
-        java.lang.System.out.println(Integer.toBinaryString(components.getFromClasses(Light.class)));
-        java.lang.System.out.println(Integer.toBinaryString(components.getFromClasses(MeshData.class)));
         Position position = (Position) components.getComponent(Position.class);
         Light light = (Light) components.getComponent(Light.class);
         
