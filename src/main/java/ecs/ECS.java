@@ -1,9 +1,9 @@
 package ecs;
 
-import ecs.Events.EventManager;
+import ecs.events.EventManager;
 import graphic.Window;
 import util.ComponentMask;
-import util.ETree.EntNode;
+import util.nodes.EntNode;
 
 import java.util.LinkedList;
 import java.util.List;

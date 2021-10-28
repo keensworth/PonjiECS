@@ -1,7 +1,7 @@
 package ecs;
 
 import util.Container;
-import util.ETree.IndexNode;
+import util.nodes.IndexNode;
 
 import java.lang.reflect.Field;
 

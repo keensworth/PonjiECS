@@ -1,8 +1,6 @@
 package util;
 
-import ecs.Entity;
-import util.ETree.EntNode;
-import util.ETree.IndexNode;
+import util.nodes.IndexNode;
 
 public class NodeTest {
     private static int[] components = new int[]{44564563,23452345,53453453,222333111};

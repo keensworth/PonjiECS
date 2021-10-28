@@ -2,7 +2,7 @@ package ecs;
 
 import util.ComponentMask;
 import util.Container;
-import util.ETree.EntNode;
+import util.nodes.EntNode;
 
 public abstract class System {
     public ECS ecs;

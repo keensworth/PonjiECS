@@ -1,9 +1,9 @@
 
 import ecs.ECS;
-import ecs.Components.*;
-import ecs.Events.Event;
-import ecs.Events.EventManager;
-import ecs.Systems.*;
+import ecs.components.*;
+import ecs.events.Event;
+import ecs.events.EventManager;
+import ecs.systems.*;
 import graphic.AssetGroup;
 import graphic.AssetManager;
 import org.joml.Vector3f;
@@ -113,17 +113,17 @@ public class Application {
                 camera.add()
         );
 
-        /*
+
         for (int i = 0; i < 4; i ++){
             ecs.createEntity(
-                    position.add(new float[]{0,-150 + i*150, 0}),
+                    position.add(new Vector3f(0,-150 + i*150, 0)),
                     health.add((i+1)*12),
                     radius.add(eRadius),
                     ballSplit.add(2),
                     light.add(Light.POINT_LIGHT)
             );
         }
-         */
+
     }
 
     //Main loop
@@ -133,7 +133,7 @@ public class Application {
         while(true){
             start = System.nanoTime();
             update((float)dt);
-            System.out.println("UPDATED");
+            System.out.println("UPDATED: " + (int)(1/(float)dt));
             end = System.nanoTime();
 
             dt = (end-start)/1000000000D;

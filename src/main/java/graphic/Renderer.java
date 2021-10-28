@@ -1,20 +1,17 @@
 package graphic;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.Math;
 import java.nio.ByteBuffer;
 import java.util.Scanner;
 
 import de.javagl.obj.*;
-import ecs.Components.*;
-import ecs.ECS;
+import ecs.components.*;
 import ecs.Entity;
 import org.joml.*;
 import util.ComponentMask;
 import util.Container;
-import util.ETree.EntNode;
+import util.nodes.EntNode;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
