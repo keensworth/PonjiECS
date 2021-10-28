@@ -89,7 +89,6 @@ void main() {
         }
     }
 
-    result += CalculateLight(mousePos, false);
     result += 0.0f * outColor;
     result = pow(result, vec3(1.0 / gamma));
     fragColor = vec4(result,1f);
