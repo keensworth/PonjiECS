@@ -92,26 +92,27 @@ Every component class must contain an `add` method, constructed similarly to the
 ### System Implementation
 The context for most logic will be inside of a class that extends the `System` class. Most entity/component interactions will take place inside of system classes. At the bare
 minimum, a system class must be constructed as follows:
+
 ```java
-import ecs.Entity;
+
 import ecs.System;
-import ecs.Components.*;
 import util.*;
-import util.ETree.EntNode;
+import util.nodes.EntNode;
 
 public class ExampleSys extends System {
     public ExampleSys() {
         super();
     }
-    
+
     // this method is called from within the ECS every frame
     // this is where the system does its work
     @Override
     public Class update(float dt, EntNode entityTree, ComponentMask components) {
-            return null;
-        }
+        return null;
     }
-    
+
+}
+
     @Override
     public void exit() {
 
