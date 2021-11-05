@@ -219,10 +219,10 @@ public class ExampleSys extends System {
         // arbitrarily pick the first entity
         Entity entity = entities[0];
         
-        // get position
+        // (how to) get position
         Vector3f entityPos = position.get(entity)
         
-        // set position
+        // (how to) set position
         position.set(new Vector3f(0,0,5), entity)
         
         return null;
